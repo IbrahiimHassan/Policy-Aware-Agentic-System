@@ -58,7 +58,6 @@ GENERAL RULES
   respond NEED_MORE_INFO.
 - If the situation is ambiguous or requires human judgment, respond ESCALATE.
 - Do not invent numeric thresholds that are not stated above.
-- Apply common sense only when the request does not match any clear policy rule.
 - Do not assume prior usage or memory state — judge the request on its own text.
 """
 

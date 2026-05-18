@@ -1,0 +1,126 @@
+{
+  "policy_set": "Egypt Private Sector Leave (Law 14 of 2025 — simplified ruleset)",
+  "source": "Condensed from public summaries of Egypt Labor Law 14/2025; internal automation only.",
+  "last_updated": "2026-05-13",
+  "policies": [
+    {
+      "id": "AL-01",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months < 6",
+      "action": "REJECT",
+      "message": "Annual leave is not granted before completing 6 months of service (first entitlement is up to 15 paid days after that milestone)."
+    },
+    {
+      "id": "AL-02",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months >= 6 and employment_duration_months < 12 and days_requested <= 15",
+      "action": "APPROVE",
+      "message": "After 6 months but before one full year, up to 15 paid annual leave days may be granted under the simplified schedule."
+    },
+    {
+      "id": "AL-02B",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months >= 6 and employment_duration_months < 12 and days_requested > 15",
+      "action": "REJECT",
+      "message": "In the first year of service (from month 6 to before month 12), annual leave cannot exceed 15 paid days under this simplified rule."
+    },
+    {
+      "id": "AL-03",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months >= 12 and employment_duration_months < 120 and days_requested <= 21",
+      "action": "APPROVE",
+      "message": "After one full year of service and before 10 years, up to 21 paid annual leave days per year may be granted under the simplified schedule."
+    },
+    {
+      "id": "AL-03B",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months >= 12 and employment_duration_months < 120 and days_requested > 21",
+      "action": "REJECT",
+      "message": "Before completing 10 years of service, annual leave cannot exceed 21 paid days per year under this simplified rule."
+    },
+    {
+      "id": "AL-04",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months >= 120 and days_requested <= 30",
+      "action": "APPROVE",
+      "message": "After 10 years of service (or equivalent long tenure in this model), up to 30 paid annual leave days may be granted (aligned with the long-service tier in summaries of Law 14/2025)."
+    },
+    {
+      "id": "AL-04B",
+      "category": "Annual Leave",
+      "condition": "leave_type == 'annual' and employment_duration_months >= 120 and days_requested > 30",
+      "action": "REJECT",
+      "message": "Even after 10 years of service, this workflow caps a single annual leave request at 30 paid days (disability-related longer entitlements are not modeled here)."
+    },
+    {
+      "id": "SL-01",
+      "category": "Sick Leave",
+      "condition": "leave_type == 'sick'",
+      "action": "ESCALATE",
+      "message": "Sick leave depends on a competent medical authority and pay bands over up to 12 months in a 3-year cycle; HR or medical review is required."
+    },
+    {
+      "id": "ML-01",
+      "category": "Maternity Leave",
+      "condition": "leave_type == 'maternity' and days_requested <= 120",
+      "action": "APPROVE",
+      "message": "Maternity leave of up to 120 paid days is within the statutory entitlement described for Law 14/2025 in public summaries."
+    },
+    {
+      "id": "ML-02",
+      "category": "Maternity Leave",
+      "condition": "leave_type == 'maternity' and days_requested > 120",
+      "action": "REJECT",
+      "message": "A single maternity leave request cannot exceed 120 paid days under the summarized statutory cap."
+    },
+    {
+      "id": "HJ-01",
+      "category": "Hajj Leave",
+      "condition": "leave_type == 'hajj' and employment_duration_months < 60",
+      "action": "REJECT",
+      "message": "Hajj leave is granted only once after at least 5 years (60 months) of continuous service."
+    },
+    {
+      "id": "HJ-02",
+      "category": "Hajj Leave",
+      "condition": "leave_type == 'hajj' and employment_duration_months >= 60 and days_requested <= 30",
+      "action": "APPROVE",
+      "message": "After 5 years of service, Hajj leave of up to one month (30 days) may be granted under the summarized rules."
+    },
+    {
+      "id": "HJ-03",
+      "category": "Hajj Leave",
+      "condition": "leave_type == 'hajj' and employment_duration_months >= 60 and days_requested > 30",
+      "action": "REJECT",
+      "message": "Hajj leave cannot exceed one month (30 days) at a time in this simplified model."
+    },
+    {
+      "id": "SP-01",
+      "category": "Special / Short Personal Leave",
+      "condition": "leave_type == 'casual' and days_requested <= 3",
+      "action": "APPROVE",
+      "message": "Short personal or special-circumstance leave (mapped to casual in this schema) up to 3 days may be auto-approved when other rules do not block it."
+    },
+    {
+      "id": "SP-02",
+      "category": "Special / Short Personal Leave",
+      "condition": "leave_type == 'casual' and days_requested > 3",
+      "action": "REJECT",
+      "message": "More than 3 consecutive days for this informal short-leave category must go through HR under special-circumstances procedures."
+    },
+    {
+      "id": "CT-01",
+      "category": "Contact / Contagion Leave",
+      "condition": "leave_type == 'contact'",
+      "action": "ESCALATE",
+      "message": "Contact leave after exposure to contagious disease requires a medical decision and HR approval (up to 3 months may be possible under law summaries)."
+    },
+    {
+      "id": "UL-01",
+      "category": "Unpaid Leave",
+      "condition": "leave_type == 'unpaid'",
+      "action": "ESCALATE",
+      "message": "Unpaid leave requires explicit employer approval under Law 14/2025 summaries."
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+
+=== THESIS CHAPTER 4 — MASTER RESULTS SUMMARY ===
+
+[DATASET]
+Total cases: 200
+APPROVE: 46 (23.0%) | REJECT: 91 (45.5%) | ESCALATE: 36 (18.0%) | NMI: 27 (13.5%)
+Clean: 150 | Memory: 25 | Noisy: 25
+
+[MAIN RESULTS]
+Pipeline   accuracy: 81.0%  |  Macro F1: 0.7937
+Baseline A accuracy: 57.0%  |  Macro F1: 0.5707
+Baseline B accuracy: 66.0%  |  Macro F1: 0.6763
+
+[PER-CLASS F1 — PIPELINE]
+APPROVE: 0.8261  REJECT: 0.8452  ESCALATE: 0.8767  NMI: 0.6269
+
+[PER-SCENARIO ACCURACY — PIPELINE]
+Clean: 75.33%  |  Memory: 100.00%  |  Noisy: 96.00%
+
+[CONSISTENCY]
+Strict consistency: 92.0%
+Mean soft consistency: 97.5%
+By scenario — Clean: 89.3%  Memory: 100.0%  Noisy: 100.0%
+
+[ABLATION — ACCURACY DROP FROM FULL PIPELINE]
+— No Memory:     +10.0% pts  (Accuracy: 71.0%)
+— No Validation:     +5.0% pts  (Accuracy: 76.0%)
+— No Explanation:     +1.0% pts  (Accuracy: 80.0%)
+— No Retry:     -1.0% pts  (Accuracy: 82.0%)
+
+[ERROR ANALYSIS — PIPELINE]
+Total errors: 23  (11.5% error rate)
+Top error type: MEMORY_CAP_BOUNDARY (12 cases)
+Error breakdown: MEMORY_CAP_BOUNDARY: 12, POLICY_MISMATCH: 6, EXTRACTION_ERROR: 3, MISSING_FIELD: 1, NOISE_INDUCED: 1
+
+[EXPLANATION AUDIT]
+Faithful: 13 (65.0%)  |  Partial: 1 (5.0%)  |  Unfaithful: 6 (30.0%)
+
+[POLICY ID ACCURACY]
+Exact match: 84.0%  |  Partial: 0.0%  |  No match: 16.1%
+
+===================================================
+
+Files saved:
+D:\Users\Ibrahim\Downloads\FINAL\results\ablation_results.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\confusion_matrix_baseline_a.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\confusion_matrix_baseline_b.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\confusion_matrix_pipeline.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\consistency_results.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\consistency_summary.json
+D:\Users\Ibrahim\Downloads\FINAL\results\dataset_cross_table.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\dataset_distribution.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\disagreement_baselineB_vs_pipeline.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\error_analysis.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\error_category_frequency.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\error_comparison.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\explanation_audit.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\ablation_comparison.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\accuracy_by_leave_category.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\accuracy_by_scenario_type.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\confusion_matrix_baselineA.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\confusion_matrix_baselineB.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\confusion_matrix_baseline_a.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\confusion_matrix_baseline_b.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\confusion_matrix_pipeline.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\consistency_by_scenario.png
+D:\Users\Ibrahim\Downloads\FINAL\results\figures\explanation_faithfulness.png
+D:\Users\Ibrahim\Downloads\FINAL\results\main_evaluation.csv
+D:\Users\Ibrahim\Downloads\FINAL\results\main_metrics.json
+D:\Users\Ibrahim\Downloads\FINAL\results\policy_id_accuracy.json

@@ -1,0 +1,208 @@
+{
+  "overall_accuracy": {
+    "pipeline": 0.81,
+    "baseline_a": 0.57,
+    "baseline_b": 0.66
+  },
+  "per_class": {
+    "pipeline": {
+      "APPROVE": {
+        "precision": 0.8260869565217391,
+        "recall": 0.8260869565217391,
+        "f1-score": 0.8260869565217391,
+        "support": 46.0
+      },
+      "REJECT": {
+        "precision": 0.922077922077922,
+        "recall": 0.7802197802197802,
+        "f1-score": 0.8452380952380952,
+        "support": 91.0
+      },
+      "ESCALATE": {
+        "precision": 0.8648648648648649,
+        "recall": 0.8888888888888888,
+        "f1-score": 0.8767123287671232,
+        "support": 36.0
+      },
+      "NEED_MORE_INFO": {
+        "precision": 0.525,
+        "recall": 0.7777777777777778,
+        "f1-score": 0.6268656716417911,
+        "support": 27.0
+      }
+    },
+    "baseline_a": {
+      "APPROVE": {
+        "precision": 0.3225806451612903,
+        "recall": 0.21739130434782608,
+        "f1-score": 0.2597402597402597,
+        "support": 46.0
+      },
+      "REJECT": {
+        "precision": 0.6375,
+        "recall": 0.5604395604395604,
+        "f1-score": 0.5964912280701754,
+        "support": 91.0
+      },
+      "ESCALATE": {
+        "precision": 0.9142857142857143,
+        "recall": 0.8888888888888888,
+        "f1-score": 0.9014084507042254,
+        "support": 36.0
+      },
+      "NEED_MORE_INFO": {
+        "precision": 0.39622641509433965,
+        "recall": 0.7777777777777778,
+        "f1-score": 0.525,
+        "support": 27.0
+      }
+    },
+    "baseline_b": {
+      "APPROVE": {
+        "precision": 0.4626865671641791,
+        "recall": 0.6739130434782609,
+        "f1-score": 0.5486725663716814,
+        "support": 46.0
+      },
+      "REJECT": {
+        "precision": 0.8387096774193549,
+        "recall": 0.5714285714285714,
+        "f1-score": 0.6797385620915033,
+        "support": 91.0
+      },
+      "ESCALATE": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1-score": 0.8571428571428571,
+        "support": 36.0
+      },
+      "NEED_MORE_INFO": {
+        "precision": 0.5,
+        "recall": 0.8148148148148148,
+        "f1-score": 0.6197183098591549,
+        "support": 27.0
+      }
+    }
+  },
+  "macro_f1": {
+    "pipeline": 0.7937257630421871,
+    "baseline_a": 0.5706599846286651,
+    "baseline_b": 0.6763180738662992
+  },
+  "weighted_f1": {
+    "pipeline": 0.8170184181830574,
+    "baseline_a": 0.56427228963895,
+    "baseline_b": 0.673423422133821
+  },
+  "macro_avg": {
+    "pipeline": {
+      "precision": 0.7845074358661315,
+      "recall": 0.8182433508520465,
+      "f1-score": 0.7937257630421871,
+      "support": 200.0
+    },
+    "baseline_a": {
+      "precision": 0.567648193635336,
+      "recall": 0.6111243828635132,
+      "f1-score": 0.5706599846286651,
+      "support": 200.0
+    },
+    "baseline_b": {
+      "precision": 0.7003490611458835,
+      "recall": 0.7025391074304118,
+      "f1-score": 0.6763180738662992,
+      "support": 200.0
+    }
+  },
+  "weighted_avg": {
+    "pipeline": {
+      "precision": 0.8360961302211303,
+      "recall": 0.81,
+      "f1-score": 0.8170184181830574,
+      "support": 200.0
+    },
+    "baseline_a": {
+      "precision": 0.5823180429962611,
+      "recall": 0.57,
+      "f1-score": 0.56427228963895,
+      "support": 200.0
+    },
+    "baseline_b": {
+      "precision": 0.7355308136735677,
+      "recall": 0.66,
+      "f1-score": 0.673423422133821,
+      "support": 200.0
+    }
+  },
+  "per_scenario_accuracy": [
+    {
+      "System": "Pipeline",
+      "Clean Acc": "75.33%",
+      "Memory Acc": "100.00%",
+      "Noisy Acc": "96.00%"
+    },
+    {
+      "System": "Baseline A",
+      "Clean Acc": "62.67%",
+      "Memory Acc": "4.00%",
+      "Noisy Acc": "76.00%"
+    },
+    {
+      "System": "Baseline B",
+      "Clean Acc": "70.00%",
+      "Memory Acc": "20.00%",
+      "Noisy Acc": "88.00%"
+    }
+  ],
+  "per_category_pipeline": [
+    {
+      "Category": "annual_approve",
+      "Count": 25,
+      "Accuracy": "72.00%"
+    },
+    {
+      "Category": "annual_reject",
+      "Count": 13,
+      "Accuracy": "69.23%"
+    },
+    {
+      "Category": "sick",
+      "Count": 16,
+      "Accuracy": "75.00%"
+    },
+    {
+      "Category": "maternity",
+      "Count": 25,
+      "Accuracy": "68.00%"
+    },
+    {
+      "Category": "hajj",
+      "Count": 25,
+      "Accuracy": "96.00%"
+    },
+    {
+      "Category": "casual",
+      "Count": 21,
+      "Accuracy": "76.19%"
+    },
+    {
+      "Category": "ambiguous_nmi",
+      "Count": 27,
+      "Accuracy": "77.78%"
+    },
+    {
+      "Category": "memory",
+      "Count": 25,
+      "Accuracy": "100.00%"
+    },
+    {
+      "Category": "contact_unpaid",
+      "Count": 23,
+      "Accuracy": "86.96%"
+    }
+  ],
+  "noise_robustness_paired": {
+    "accuracy": 0.38095238095238093,
+    "n_pairs": 21
+  }
+}

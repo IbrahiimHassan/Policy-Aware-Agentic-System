@@ -1,0 +1,4 @@
+scenario_type,APPROVE,ESCALATE,NEED_MORE_INFO,REJECT
+clean,32,15,24,29
+memory,0,0,0,25
+noisy,11,5,1,8

@@ -1,0 +1,9 @@
+{
+  "total_correct_decisions": 162,
+  "exact_match_count": 136,
+  "exact_match_pct": 83.95,
+  "partial_match_count": 0,
+  "partial_match_pct": 0.0,
+  "no_match_count": 26,
+  "no_match_pct": 16.05
+}

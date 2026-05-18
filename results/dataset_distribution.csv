@@ -1,0 +1,27 @@
+﻿section,Outcome,Count,Percent,Scenario,Leave Type,APPROVE,REJECT,ESCALATE,NEED_MORE_INFO
+Table_A_gold_label,,,,,,,,,
+,APPROVE,46.0,23.0,,,,,,
+,REJECT,91.0,45.5,,,,,,
+,ESCALATE,36.0,18.0,,,,,,
+,NEED_MORE_INFO,27.0,13.5,,,,,,
+,,,,,,,,,
+Table_B_scenario,,,,,,,,,
+,,150.0,75.0,clean,,,,,
+,,25.0,12.5,memory,,,,,
+,,25.0,12.5,noisy,,,,,
+,,,,,,,,,
+Table_C_leave_type,,,,,,,,,
+,,38.0,19.0,,annual,,,,
+,,27.0,13.5,,ambiguous_nmi,,,,
+,,25.0,12.5,,hajj,,,,
+,,25.0,12.5,,maternity,,,,
+,,25.0,12.5,,memory,,,,
+,,23.0,11.5,,contact_unpaid,,,,
+,,21.0,10.5,,casual,,,,
+,,16.0,8.0,,sick,,,,
+,,,,,,,,,
+Table_D_crosstab,,,,,,,,,
+,,,,clean,,37.0,58.0,29.0,26.0
+,,,,memory,,0.0,25.0,0.0,0.0
+,,,,noisy,,9.0,8.0,7.0,1.0
+,,,,,,,,,

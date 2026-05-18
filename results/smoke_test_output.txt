@@ -1,0 +1,50 @@
+
+[PASS] AL-01 annual under 6 months
+  case_data: {"leave_type": "annual", "employment_duration_months": 3, "days_requested": 5}
+  expected: ['AL-01']
+  got:      ['AL-01']
+
+[PASS] AL-02 annual 6–11 months within 15 days
+  case_data: {"leave_type": "annual", "employment_duration_months": 8, "days_requested": 5}
+  expected: ['AL-02']
+  got:      ['AL-02']
+
+[PASS] AL-03B annual 12+ months over 21 days
+  case_data: {"leave_type": "annual", "employment_duration_months": 24, "days_requested": 31}
+  expected: ['AL-03B']
+  got:      ['AL-03B']
+
+[PASS] AL-03B twelve months 30 days over mid cap
+  case_data: {"leave_type": "annual", "employment_duration_months": 12, "days_requested": 30}
+  expected: ['AL-03B']
+  got:      ['AL-03B']
+
+[PASS] AL-03 twelve months 21 days OK
+  case_data: {"leave_type": "annual", "employment_duration_months": 12, "days_requested": 21}
+  expected: ['AL-03']
+  got:      ['AL-03']
+
+[PASS] SP-02 casual over 3 days
+  case_data: {"leave_type": "casual", "employment_duration_months": 0, "days_requested": 4}
+  expected: ['SP-02']
+  got:      ['SP-02']
+
+[PASS] SP-01 casual 3 days OK
+  case_data: {"leave_type": "casual", "employment_duration_months": 0, "days_requested": 3}
+  expected: ['SP-01']
+  got:      ['SP-01']
+
+[PASS] SP-01 casual 2 days OK
+  case_data: {"leave_type": "casual", "employment_duration_months": 0, "days_requested": 2}
+  expected: ['SP-01']
+  got:      ['SP-01']
+
+[PASS] SL-01 sick escalates
+  case_data: {"leave_type": "sick", "employment_duration_months": 0, "days_requested": 1}
+  expected: ['SL-01']
+  got:      ['SL-01']
+
+[PASS] HJ-01 Hajj before 5 years
+  case_data: {"leave_type": "hajj", "employment_duration_months": 48, "days_requested": 20}
+  expected: ['HJ-01']
+  got:      ['HJ-01']

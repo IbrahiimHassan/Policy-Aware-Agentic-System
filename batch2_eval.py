@@ -5,10 +5,9 @@ Does NOT modify any existing source files.
 """
 from __future__ import annotations
 
-import inspect
+import importlib
 import json
 import os
-import sys
 import traceback
 from collections import Counter
 from pathlib import Path
@@ -21,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import classification_report, f1_score
+from sklearn.metrics import f1_score
 
 # ---------------------------------------------------------------------------
 # Imports from project (do not modify)
@@ -57,18 +56,30 @@ LABELS = ["APPROVE", "REJECT", "ESCALATE", "NEED_MORE_INFO"]
 # ---------------------------------------------------------------------------
 # Load benchmark cases
 # ---------------------------------------------------------------------------
-from leave_benchmark_cases import CASES as BENCHMARK_CASES
+from book_benchmark_cases import CASES as BENCHMARK_CASES
 
-# Map case_id -> case dict
-CASE_MAP = {c["case_id"]: c for c in BENCHMARK_CASES}
+CASE_MAP: Dict[str, Dict[str, Any]] = {}
+for c in BENCHMARK_CASES:
+    CASE_MAP[c["case_id"]] = {
+        "case_id": c["case_id"],
+        "input": c.get("input_text") or c.get("input") or c.get("request", ""),
+        "category": c.get("category", ""),
+        "expected_decision": c.get("expected_decision"),
+        "_memory_store_patch": c.get("_memory_store_patch"),
+        "is_noisy": bool(c.get("is_noisy", False)),
+    }
 
 # ---------------------------------------------------------------------------
 # Helper: run pipeline with optional skip_explanation
 # ---------------------------------------------------------------------------
 
-def _run_pipeline(input_text: str, memory_patch: Optional[Dict] = None, skip_explanation: bool = True) -> Dict[str, Any]:
+
+def _run_pipeline(
+    input_text: str, memory_patch: Optional[Dict] = None, skip_explanation: bool = True
+) -> Dict[str, Any]:
     """Direct copy of run_system logic so we can tweak it for ablations."""
     import interpreter.llm_interpreter as _interp_mod
+
     interpreter_result = _interp_mod.llm_interpreter(input_text)
     case_data = interpreter_result.get("case_data", {})
 
@@ -121,6 +132,7 @@ def _run_pipeline(input_text: str, memory_patch: Optional[Dict] = None, skip_exp
 # TASK 4 — Consistency Analysis
 # ---------------------------------------------------------------------------
 
+
 def task4_consistency():
     print("\n=== TASK 4 ===")
     print("Running consistency analysis (10 runs per case, skip explanations)...")
@@ -128,7 +140,7 @@ def task4_consistency():
     rows = []
     for case in BENCHMARK_CASES:
         cid = case["case_id"]
-        text = case["input"]
+        text = case["input_text"] if "input_text" in case else case.get("input", "")
         patch = case.get("_memory_store_patch")
         gold = case["expected_decision"]
 
@@ -144,21 +156,22 @@ def task4_consistency():
 
         scenario = "noisy" if case.get("is_noisy", False) else ("memory" if patch else "clean")
 
-        rows.append({
-            "case_id": cid,
-            "scenario": scenario,
-            "gold_label": gold,
-            "strict_consistent": strict_consistent,
-            "majority_decision": majority_decision,
-            "soft_consistency_rate": soft_consistency_rate,
-            "is_correct_majority": is_correct_majority,
-            "decisions_json": json.dumps(decisions),
-        })
+        rows.append(
+            {
+                "case_id": cid,
+                "scenario": scenario,
+                "gold_label": gold,
+                "strict_consistent": strict_consistent,
+                "majority_decision": majority_decision,
+                "soft_consistency_rate": soft_consistency_rate,
+                "is_correct_majority": is_correct_majority,
+                "decisions_json": json.dumps(decisions),
+            }
+        )
 
     df = pd.DataFrame(rows)
     df.to_csv(CSV_CONSISTENCY, index=False)
 
-    # Aggregates
     strict_pct = df["strict_consistent"].mean() * 100
     mean_soft = df["soft_consistency_rate"].mean() * 100
 
@@ -190,18 +203,16 @@ def task4_consistency():
 # TASK 5 — Ablation Study
 # ---------------------------------------------------------------------------
 
+
 def _compute_metrics(y_true: List[str], y_pred: List[str]) -> Dict[str, float]:
     """Compute accuracy, REJECT F1, NMI F1, and macro F1."""
     acc = sum(a == b for a, b in zip(y_true, y_pred)) / len(y_true)
-    # REJECT F1 (binary)
     y_true_reject = [1 if y == "REJECT" else 0 for y in y_true]
     y_pred_reject = [1 if y == "REJECT" else 0 for y in y_pred]
     reject_f1 = f1_score(y_true_reject, y_pred_reject, zero_division=0)
-    # NMI F1 (binary)
     y_true_nmi = [1 if y == "NEED_MORE_INFO" else 0 for y in y_true]
     y_pred_nmi = [1 if y == "NEED_MORE_INFO" else 0 for y in y_pred]
     nmi_f1 = f1_score(y_true_nmi, y_pred_nmi, zero_division=0)
-    # Macro F1 (multi-class)
     macro_f1 = f1_score(y_true, y_pred, labels=LABELS, average="macro", zero_division=0)
     return {
         "accuracy": round(acc * 100, 2),
@@ -211,9 +222,12 @@ def _compute_metrics(y_true: List[str], y_pred: List[str]) -> Dict[str, float]:
     }
 
 
-def run_ablation_no_memory(request: str, memory_store_patch: Optional[Dict] = None) -> Dict[str, Any]:
+def run_ablation_no_memory(
+    request: str, memory_store_patch: Optional[Dict] = None
+) -> Dict[str, Any]:
     """Ablation 1 — skip memory node entirely."""
     import interpreter.llm_interpreter as _interp_mod
+
     interpreter_result = _interp_mod.llm_interpreter(request)
     case_data = interpreter_result.get("case_data", {})
 
@@ -224,7 +238,6 @@ def run_ablation_no_memory(request: str, memory_store_patch: Optional[Dict] = No
 
     policy_result = policy_checker(case_data, POLICY_JSON_PATH)
     matching = policy_result.get("matching_policies", [])
-    # Skip memory agent — pass matching policies directly
     matched_ids = sorted([p.get("policy_id") for p in matching if p.get("policy_id")])
 
     if validation_errors:
@@ -247,13 +260,16 @@ def run_ablation_no_memory(request: str, memory_store_patch: Optional[Dict] = No
     }
 
 
-def run_ablation_no_validation(request: str, memory_store_patch: Optional[Dict] = None) -> Dict[str, Any]:
+def run_ablation_no_validation(
+    request: str, memory_store_patch: Optional[Dict] = None
+) -> Dict[str, Any]:
     """Ablation 2 — skip validation node entirely."""
     import interpreter.llm_interpreter as _interp_mod
+
     interpreter_result = _interp_mod.llm_interpreter(request)
     case_data = interpreter_result.get("case_data", {})
 
-    validation_errors: List[str] = []  # Always empty
+    validation_errors: List[str] = []
 
     policy_result = policy_checker(case_data, POLICY_JSON_PATH)
     matching = policy_result.get("matching_policies", [])
@@ -263,7 +279,7 @@ def run_ablation_no_validation(request: str, memory_store_patch: Optional[Dict] 
     matched_ids = sorted([p.get("policy_id") for p in matching if p.get("policy_id")])
 
     if validation_errors:
-        decision = "REJECT"  # unreachable
+        decision = "REJECT"
     elif not matching and not can_make_decision(case_data, POLICY_JSON_PATH):
         decision = "NEED_MORE_INFO"
     else:
@@ -305,25 +321,26 @@ def _monkeypatch_no_retry():
     modified_source = source.replace(old_block, new_block)
     namespace = interp_mod.__dict__.copy()
     exec(compile(modified_source, str(source_path), "exec"), namespace)
-    # The exec overwrote llm_interpreter in the namespace
     interp_mod.llm_interpreter = namespace["llm_interpreter"]
     return True
 
 
 def _restore_llm_interpreter():
     import interpreter.llm_interpreter as interp_mod
-    # Re-import the original by reloading the module
-    import importlib
+
     importlib.reload(interp_mod)
 
 
-def run_ablation_no_retry(request: str, memory_store_patch: Optional[Dict] = None) -> Dict[str, Any]:
+def run_ablation_no_retry(
+    request: str, memory_store_patch: Optional[Dict] = None
+) -> Dict[str, Any]:
     """Ablation 3 — disable interpreter retry."""
-    # The monkey-patch was applied before the run; just call normal pipeline
     return _run_pipeline(request, memory_patch=memory_store_patch, skip_explanation=True)
 
 
-def run_ablation_no_explanation(request: str, memory_store_patch: Optional[Dict] = None) -> Dict[str, Any]:
+def run_ablation_no_explanation(
+    request: str, memory_store_patch: Optional[Dict] = None
+) -> Dict[str, Any]:
     """Ablation 4 — skip explanation node entirely (same decision path, no LLM call)."""
     return _run_pipeline(request, memory_patch=memory_store_patch, skip_explanation=True)
 
@@ -332,7 +349,6 @@ def task5_ablation():
     print("\n=== TASK 5 ===")
     print("Running ablation study...")
 
-    # Load batch1 results for full pipeline
     df_batch1 = pd.read_csv(CSV_BATCH1)
     full_y_true = df_batch1["gold_label"].tolist()
     full_y_pred = df_batch1["pipeline_decision"].tolist()
@@ -351,24 +367,24 @@ def task5_ablation():
         }
     ]
 
-    # Run ablations 1, 2 and 4
     for name, ab_fn in ablations:
         y_true = []
         y_pred = []
         for case in BENCHMARK_CASES:
-            result = ab_fn(case["input"], case.get("_memory_store_patch"))
+            text = case["input_text"] if "input_text" in case else case.get("input", "")
+            result = ab_fn(text, case.get("_memory_store_patch"))
             y_true.append(case["expected_decision"])
             y_pred.append(result["decision"])
         metrics = _compute_metrics(y_true, y_pred)
         results.append({"configuration": f"— {name}", **metrics})
         print(f"  {name}: accuracy={metrics['accuracy']:.2f}%, macro_f1={metrics['macro_f1']:.4f}")
 
-    # Ablation 3 — No Retry (monkey-patch)
     patched = _monkeypatch_no_retry()
     y_true = []
     y_pred = []
     for case in BENCHMARK_CASES:
-        result = run_ablation_no_retry(case["input"], case.get("_memory_store_patch"))
+        text = case["input_text"] if "input_text" in case else case.get("input", "")
+        result = run_ablation_no_retry(text, case.get("_memory_store_patch"))
         y_true.append(case["expected_decision"])
         y_pred.append(result["decision"])
     metrics = _compute_metrics(y_true, y_pred)
@@ -380,7 +396,6 @@ def task5_ablation():
     df_results = pd.DataFrame(results)
     df_results.to_csv(CSV_ABLATION, index=False)
 
-    # Print table
     print("\nConfiguration        | Accuracy | REJECT F1 | NMI F1 | Macro F1")
     print("-" * 65)
     for r in results:
@@ -392,7 +407,6 @@ def task5_ablation():
             f"{r['macro_f1']:>8.4f}"
         )
 
-    # Plot grouped bar chart
     fig, ax = plt.subplots(figsize=(9, 5))
     x = np.arange(len(results))
     full_acc = results[0]["accuracy"]
@@ -416,8 +430,15 @@ def task5_ablation():
     ax.axhline(0, color="black", linewidth=0.5)
     for bar, drop in zip(bars, drops):
         height = bar.get_height()
-        ax.annotate(f"{drop:.1f}", xy=(bar.get_x() + bar.get_width() / 2, height),
-                    xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=8)
+        ax.annotate(
+            f"{drop:.1f}",
+            xy=(bar.get_x() + bar.get_width() / 2, height),
+            xytext=(0, 3),
+            textcoords="offset points",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
     fig.tight_layout()
     fig.savefig(PNG_ABLATION, dpi=300, bbox_inches="tight")
     plt.close(fig)
@@ -428,23 +449,24 @@ def task5_ablation():
 # TASK 6 — Error Analysis
 # ---------------------------------------------------------------------------
 
+
 def _classify_pipeline_error(row: pd.Series, case: Dict[str, Any]) -> str:
     """Classify a single pipeline error into one category."""
-    # Re-run to get fresh extraction and skipped policies
     result = _run_pipeline(case["input"], case.get("_memory_store_patch"), skip_explanation=True)
     case_data = result.get("json", {})
     skipped = result.get("skipped_policies", [])
     patch = case.get("_memory_store_patch")
 
-    leave_type = case_data.get("leave_type")
+    request_type = case_data.get("request_type")
+    books_req = case_data.get("books_requested")
     days_req = case_data.get("days_requested")
-    tenure = case_data.get("employment_duration_months")
+    book_cat = case_data.get("book_category")
 
     # MEMORY_CAP_BOUNDARY: memory case where stored + requested is within 1 of cap
-    if patch and patch.get("leave"):
-        stored = patch["leave"].get("annual_days_already_taken_this_period", 0)
-        total = stored + (days_req or 0)
-        cap = 30  # from config
+    if patch and patch.get("library"):
+        stored = patch["library"].get("current_books_borrowed", 0)
+        total = stored + (books_req or 0)
+        cap = 2
         if abs(total - cap) <= 1:
             return "MEMORY_CAP_BOUNDARY"
 
@@ -456,15 +478,39 @@ def _classify_pipeline_error(row: pd.Series, case: Dict[str, Any]) -> str:
     if skipped:
         return "MISSING_FIELD"
 
-    # EXTRACTION_ERROR: leave_type or days_requested wrong/null when clearly stated
+    # EXTRACTION_ERROR: key fields wrong/null when clearly stated
     input_lower = case["input"].lower()
-    if leave_type is None and any(k in input_lower for k in ["annual", "sick", "maternity", "hajj", "casual", "unpaid"]):
+    if request_type is None and any(
+        k in input_lower for k in ["borrow", "renew", "reserve", "lost", "damaged"]
+    ):
         return "EXTRACTION_ERROR"
-    if days_req is None and any(w in input_lower for w in ["day", "days", "week", "month"]):
+    if books_req is None and any(
+        w in input_lower for w in ["book", "books", "one", "two", "three"]
+    ):
         return "EXTRACTION_ERROR"
-    if leave_type == "annual" and "sick" in input_lower:
+    if days_req is None and any(w in input_lower for w in ["day", "days", "week"]):
         return "EXTRACTION_ERROR"
-    if leave_type == "sick" and "annual" in input_lower:
+    if book_cat is None and any(
+        w in input_lower
+        for w in [
+            "regular",
+            "reference",
+            "thesis",
+            "dvd",
+            "cd",
+            "encyclopedia",
+            "dictionary",
+            "newspaper",
+            "magazine",
+            "journal",
+            "atlas",
+            "illustrated",
+        ]
+    ):
+        return "EXTRACTION_ERROR"
+    if request_type == "borrow" and "renew" in input_lower:
+        return "EXTRACTION_ERROR"
+    if request_type == "renew" and "borrow" in input_lower:
         return "EXTRACTION_ERROR"
 
     # POLICY_MISMATCH: fields extracted correctly but wrong policy fired
@@ -477,18 +523,12 @@ def _classify_baseline_a_error(row: pd.Series, case: Dict[str, Any]) -> str:
     pred = row["baselineA_decision"]
     patch = case.get("_memory_store_patch")
 
-    # MEMORY_BLIND
     if patch and gold == "REJECT" and pred == "APPROVE":
         return "MEMORY_BLIND"
-
-    # NMI_MISSED
     if gold == "NEED_MORE_INFO" and pred != "NEED_MORE_INFO":
         return "NMI_MISSED"
-
-    # THRESHOLD_HALLUCINATION: wrong on a case with clear numeric threshold
-    if case["category"] in ["annual_approve", "annual_reject", "maternity_approve", "maternity_reject", "hajj_approve", "hajj_reject", "casual_approve", "casual_reject"]:
+    if case["category"] in ["borrow_approve", "borrow_reject", "fines_reject"]:
         return "THRESHOLD_HALLUCINATION"
-
     return "OTHER"
 
 
@@ -502,7 +542,7 @@ def _classify_baseline_b_error(row: pd.Series, case: Dict[str, Any]) -> str:
         return "MEMORY_BLIND"
     if gold == "NEED_MORE_INFO" and pred != "NEED_MORE_INFO":
         return "NMI_MISSED"
-    if case["category"] in ["annual_approve", "annual_reject"]:
+    if case["category"] in ["borrow_approve", "borrow_reject"]:
         return "COMPOUND_CONDITION"
     return "OTHER"
 
@@ -523,12 +563,12 @@ def task6_error_analysis():
     cat_counts = pipe_errors["error_category"].value_counts().to_dict()
 
     print("\nA) Pipeline Error Category Frequency:")
-    print(f"{'Category':<25} | {'Count':>5} | {'% of errors':>10} | {'% of 150':>8}")
+    print(f"{'Category':<25} | {'Count':>5} | {'% of errors':>10} | {'% of total':>10}")
     print("-" * 60)
     for cat, cnt in sorted(cat_counts.items(), key=lambda x: -x[1]):
         pct_errors = cnt / total_errors * 100 if total_errors else 0
-        pct_total = cnt / 150 * 100
-        print(f"{cat:<25} | {cnt:>5} | {pct_errors:>9.1f}% | {pct_total:>7.1f}%")
+        pct_total = cnt / len(df) * 100
+        print(f"{cat:<25} | {cnt:>5} | {pct_errors:>9.1f}% | {pct_total:>9.1f}%")
 
     # B) Baseline A errors
     ba_errors = df[df["baselineA_decision"] != df["gold_label"]].copy()
@@ -538,12 +578,12 @@ def task6_error_analysis():
     ba_cat_counts = ba_errors["error_category"].value_counts().to_dict()
 
     print("\nB) Baseline A Error Category Frequency:")
-    print(f"{'Category':<25} | {'Count':>5} | {'% of errors':>10} | {'% of 150':>8}")
+    print(f"{'Category':<25} | {'Count':>5} | {'% of errors':>10} | {'% of total':>10}")
     print("-" * 60)
     for cat, cnt in sorted(ba_cat_counts.items(), key=lambda x: -x[1]):
         pct_errors = cnt / len(ba_errors) * 100 if len(ba_errors) else 0
-        pct_total = cnt / 150 * 100
-        print(f"{cat:<25} | {cnt:>5} | {pct_errors:>9.1f}% | {pct_total:>7.1f}%")
+        pct_total = cnt / len(df) * 100
+        print(f"{cat:<25} | {cnt:>5} | {pct_errors:>9.1f}% | {pct_total:>9.1f}%")
 
     # C) Side-by-side comparison
     all_cats = sorted(set(list(cat_counts.keys()) + list(ba_cat_counts.keys())))
@@ -566,22 +606,25 @@ def task6_error_analysis():
     pipe_errors["input"] = pipe_errors["case_id"].apply(
         lambda cid: CASE_MAP.get(cid, {}).get("input", "")
     )
-    pipe_errors[["case_id", "category", "scenario", "gold_label", "pipeline_decision", "error_category", "input"]].to_csv(CSV_ERRORS, index=False)
+    pipe_errors[
+        ["case_id", "category", "scenario", "gold_label", "pipeline_decision", "error_category", "input"]
+    ].to_csv(CSV_ERRORS, index=False)
 
     comp_rows = []
     for cat in all_cats:
-        comp_rows.append({
-            "error_type": cat,
-            "pipeline_count": cat_counts.get(cat, 0),
-            "baselineA_count": ba_cat_counts.get(cat, 0),
-            "baselineB_count": bb_cat_counts.get(cat, 0),
-        })
+        comp_rows.append(
+            {
+                "error_type": cat,
+                "pipeline_count": cat_counts.get(cat, 0),
+                "baselineA_count": ba_cat_counts.get(cat, 0),
+                "baselineB_count": bb_cat_counts.get(cat, 0),
+            }
+        )
     pd.DataFrame(comp_rows).to_csv(CSV_ERROR_COMP, index=False)
 
     # Illustrative failure cases
     print("\n--- Illustrative Failure Cases ---")
 
-    # Case 1: Pipeline failure (prefer EXTRACTION_ERROR or MEMORY_CAP_BOUNDARY)
     pref_cats = ["EXTRACTION_ERROR", "MEMORY_CAP_BOUNDARY", "MISSING_FIELD", "POLICY_MISMATCH", "NOISE_INDUCED"]
     case1 = None
     for cat in pref_cats:
@@ -602,7 +645,6 @@ def task6_error_analysis():
         expl = (case1.get("pipeline_explanation") or "")[:300]
         print(f"  explanation: {expl}...")
 
-    # Case 2: Baseline A failure (prefer THRESHOLD_HALLUCINATION)
     ba_pref = ba_errors[ba_errors["error_category"] == "THRESHOLD_HALLUCINATION"]
     if ba_pref.empty:
         ba_pref = ba_errors
@@ -615,7 +657,6 @@ def task6_error_analysis():
         print(f"  raw_text: {c['input'][:120]}")
         print(f"  gold_label: {case2['gold_label']}  |  predicted: {case2['baselineA_decision']}")
 
-    # Case 3: Baseline B failure (prefer composite condition / COMPOUND_CONDITION)
     bb_pref = bb_errors[bb_errors["error_category"] == "COMPOUND_CONDITION"]
     if bb_pref.empty:
         bb_pref = bb_errors
@@ -635,8 +676,10 @@ def task6_error_analysis():
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="Batch 2 evaluation")
     parser.add_argument("--ablation-only", action="store_true", help="Run only Task 5 (ablation study)")
     parser.add_argument("--consistency-only", action="store_true", help="Run only Task 4 (consistency)")

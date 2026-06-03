@@ -1,11 +1,15 @@
 """
-Batch evaluation script: smoke tests, dataset tables, main run (pipeline + baselines).
+Batch 1 evaluation: Tasks 1–3.
+  TASK 1: Smoke tests (policy_checker)
+  TASK 2: Dataset distribution tables and CSV
+  TASK 3: Main evaluation run (pipeline + baselines)
 
 Imports existing modules only — does not modify project source files.
 """
 from __future__ import annotations
 
 import json
+import os
 import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -64,32 +68,35 @@ def scenario_type(case: Dict[str, Any]) -> str:
 
 
 def leave_type_from_category(category: str) -> str:
-    """Map benchmark category to a coarse leave_type label for tables."""
+    """Map benchmark category to a coarse bucket for tables."""
     cat = (category or "").strip()
     if cat == "memory_reject":
         return "memory"
     if cat == "ambiguous":
         return "ambiguous_nmi"
-    if cat.startswith("annual_"):
-        return "annual"
-    if cat.startswith("sick_"):
-        return "sick"
-    if cat.startswith("maternity_"):
-        return "maternity"
-    if cat.startswith("hajj_"):
-        return "hajj"
-    if cat.startswith("casual_"):
-        return "casual"
-    if cat in ("contact_escalate", "unpaid_escalate"):
-        return "contact_unpaid"
+    if cat.startswith("borrow_approve"):
+        return "borrow_approve"
+    if cat.startswith("borrow_reject"):
+        return "borrow_reject"
+    if cat.startswith("noncirculating_"):
+        return "non_circulating"
+    if cat.startswith("renew_"):
+        return "renewal"
+    if cat.startswith("reserve_"):
+        return "reservation"
+    if cat.startswith("report_"):
+        return "lost_damaged"
+    if cat.startswith("fines_"):
+        return "fines"
     return cat or "unknown"
 
 
 def adapt_case(row: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalize leave_benchmark_cases.CASES row to script field names."""
+    """Normalize book_benchmark_cases row to script field names."""
     return {
         "id": row.get("case_id") or row.get("id"),
-        "request": row.get("input") or row.get("request"),
+        "input": row.get("input_text") or row.get("input") or row.get("request"),
+        "request": row.get("input_text") or row.get("input") or row.get("request"),
         "expected_decision": row.get("expected_decision"),
         "leave_type": leave_type_from_category(str(row.get("category", ""))),
         "category": row.get("category", ""),
@@ -101,11 +108,7 @@ def adapt_case(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def load_benchmark_cases() -> List[Dict[str, Any]]:
-    try:
-        from leave_benchmark_cases import BENCHMARK_CASES
-    except ImportError:
-        from leave_benchmark_cases import CASES as BENCHMARK_CASES
-
+    from book_benchmark_cases import CASES as BENCHMARK_CASES
     return [adapt_case(c) for c in BENCHMARK_CASES]
 
 
@@ -175,31 +178,31 @@ def plot_confusion_matrix(
 def eval_category_bucket(category: str) -> str:
     """Aggregate benchmark categories into spec buckets for Task 3E."""
     cat = str(category or "")
-    if cat in ("annual_approve", "annual_reject", "ambiguous", "memory_reject"):
+    if cat in ("borrow_approve", "borrow_reject", "ambiguous", "memory_reject"):
         return {"ambiguous": "ambiguous_nmi", "memory_reject": "memory"}.get(cat, cat)
-    if cat.startswith("sick_"):
-        return "sick"
-    if cat.startswith("maternity_"):
-        return "maternity"
-    if cat.startswith("hajj_"):
-        return "hajj"
-    if cat.startswith("casual_"):
-        return "casual"
-    if cat in ("contact_escalate", "unpaid_escalate"):
-        return "contact_unpaid"
+    if cat.startswith("noncirculating_"):
+        return "non_circulating"
+    if cat.startswith("renew_"):
+        return "renewal"
+    if cat.startswith("reserve_"):
+        return "reservation"
+    if cat.startswith("report_"):
+        return "lost_damaged"
+    if cat.startswith("fines_"):
+        return "fines"
     return cat or "unknown"
 
 
 EVAL_BUCKET_ORDER = [
-    "annual_approve",
-    "annual_reject",
-    "sick",
-    "maternity",
-    "hajj",
-    "casual",
+    "borrow_approve",
+    "borrow_reject",
+    "non_circulating",
+    "renewal",
+    "reservation",
+    "lost_damaged",
+    "fines",
     "ambiguous_nmi",
     "memory",
-    "contact_unpaid",
 ]
 
 
@@ -255,11 +258,11 @@ def task2_dataset_distribution(cases: List[Dict[str, Any]]) -> None:
     table_b["Percent"] = (table_b["Count"] / n * 100).round(2)
 
     table_c = (
-        pd.Series(leave_types, name="Leave Type")
+        pd.Series(leave_types, name="Category")
         .value_counts()
         .reset_index()
     )
-    table_c.columns = ["Leave Type", "Count"]
+    table_c.columns = ["Category", "Count"]
     table_c["Percent"] = (table_c["Count"] / n * 100).round(2)
 
     table_d = pd.crosstab(
@@ -275,7 +278,7 @@ def task2_dataset_distribution(cases: List[Dict[str, Any]]) -> None:
 
     print_table("Table A: Distribution by gold-standard label", table_a)
     print_table("Table B: Distribution by scenario type", table_b)
-    print_table("Table C: Distribution by leave_type", table_c)
+    print_table("Table C: Distribution by category", table_c)
     print("\nTable D: scenario_type × expected_decision")
     print(table_d.to_string())
 
@@ -283,7 +286,7 @@ def task2_dataset_distribution(cases: List[Dict[str, Any]]) -> None:
         {
             "Table_A_gold_label": table_a,
             "Table_B_scenario": table_b,
-            "Table_C_leave_type": table_c,
+            "Table_C_category": table_c,
             "Table_D_crosstab": table_d.reset_index(),
         }
     )
@@ -350,7 +353,6 @@ def task3_main_evaluation(cases: List[Dict[str, Any]]) -> None:
 
         # --- Baseline B ---
         try:
-            # Uniform interface: baseline_b_fn may accept only input_text
             base_b = normalize_label(baseline_b_fn(req))
         except Exception as e:
             print(f"  [baseline B error] {cid}: {e}")
@@ -397,7 +399,6 @@ def task3_main_evaluation(cases: List[Dict[str, Any]]) -> None:
     # --- A) Overall accuracy ---
     print("\n--- A) Overall accuracy ---")
     acc_rows = []
-    # Always compute over full set: errors count as wrong by using the full lists
     for name, preds in systems.items():
         correct = sum(1 for g, p in zip(gold, preds) if g == p)
         acc = correct / len(gold) if gold else 0.0
@@ -417,11 +418,8 @@ def task3_main_evaluation(cases: List[Dict[str, Any]]) -> None:
     # --- B) Classification reports ---
     print("\n--- B) classification_report (per system) ---")
     for name, preds in systems.items():
-        # Errors count as wrong: keep full lists and map unknown labels to a placeholder
         y_t = gold
-        y_p = preds
-        # Replace any prediction not in LABELS with 'NONE' so it counts as wrong
-        y_p = [p if p in LABELS else "NONE" for p in y_p]
+        y_p = [p if p in LABELS else "NONE" for p in preds]
         print(f"\n>>> {name}")
         print(classification_report(y_t, y_p, labels=LABELS, zero_division=0))
         report = classification_report(
@@ -495,10 +493,9 @@ def task3_main_evaluation(cases: List[Dict[str, Any]]) -> None:
     metrics["per_scenario_accuracy"] = scenario_rows
     metrics["per_category_pipeline"] = cat_rows
 
-    # --- Paired noise robustness (25 clean TC_001–TC_025 vs 25 noisy with same pair_id) ---
-    # Reconstruct pair_id mapping from the original CASES to avoid relying on CSV-preserved pair_id
+    # --- Paired noise robustness ---
     try:
-        from leave_benchmark_cases import CASES as _RAW_CASES
+        from book_benchmark_cases import CASES as _RAW_CASES
     except Exception:
         _RAW_CASES = []
 
@@ -559,8 +556,7 @@ def main() -> None:
     ensure_dirs()
     cases = load_benchmark_cases()
     print(
-        f"Loaded {len(cases)} benchmark cases from leave_benchmark_cases "
-        "(BENCHMARK_CASES or CASES)"
+        f"Loaded {len(cases)} benchmark cases from book_benchmark_cases"
     )
 
     for task_fn, name in (
@@ -573,6 +569,8 @@ def main() -> None:
         except Exception as e:
             print(f"\n!!! {name} failed: {e}")
             traceback.print_exc()
+
+    print("\n=== batch1_eval.py complete ===")
 
 
 if __name__ == "__main__":

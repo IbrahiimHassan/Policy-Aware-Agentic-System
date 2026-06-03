@@ -238,8 +238,13 @@ def heuristic_extract(text):
             for rx in rules["regex"]:
                 m = re.search(rx, t)
                 if m:
+                    capture = m.group(1)
                     try:
-                        out[field] = int(m.group(1))
+                        # For numeric fields, convert to int; for string fields, keep raw capture
+                        if isinstance(DEFAULT_CASE.get(field), int):
+                            out[field] = int(capture)
+                        else:
+                            out[field] = capture.strip()
                     except Exception:
                         pass
                     break
@@ -342,9 +347,12 @@ OUTPUT RULES (critical):
 
 INFERENCE RULES:
 - If a field is not explicitly stated, infer it from context clues in the message.
-- For leave_type: choose the most likely type based on what the user is asking for (vacation/time-off usually means annual, doctor/illness means sick, baby/pregnancy means maternity, etc.). Only use null if the message gives absolutely no clue about the leave type.
-- For employment_duration_months: convert years to months (1 year = 12 months) and extract the total. DO NOT calculate remaining service.
-- For days_requested: extract ONLY the number of days the user is explicitly asking for right now. DO NOT calculate, subtract, or infer remaining entitlement. Convert common phrases like "a week" to 7 days, "two weeks" to 14 days, "a month" to 30 days.
+- For request_type: choose the most likely type based on what the user is asking for (borrow/check out usually means borrow, renew/extend means renew, reserve/hold means reserve, lost/missing means report_lost, damaged/broken means report_damaged). Only use null if the message gives absolutely no clue.
+- For user_type: if the user mentions being a researcher, faculty, or scholar → researcher; visitor, tourist, student, journalist → non_researcher.
+- For has_membership_card: true if they mention having a valid/active card; false if no card, lost, expired, or forgotten.
+- For books_requested: extract ONLY the number of books explicitly requested. Convert phrases like "a book" to 1, "two books" to 2. IMPORTANT: if the user says "negative" or "minus" (e.g. "-1 books", "negative two books", "minus three books"), preserve the negative sign and output the exact negative integer (e.g. -1, -2, -3). Do NOT normalize negatives to positive numbers.
+- For days_requested: extract ONLY the loan period explicitly stated. Convert "a week" to 7, "two weeks" to 14. IMPORTANT: preserve negative signs exactly as stated (e.g. "-5 days" → -5).
+- For book_category: infer from material type mentioned (regular, reference, periodical, audiovisual, illustrated, thesis, closed_stacks).
 
 ALLOWED FIELDS AND TYPES:
 {_format_schema_description()}
@@ -371,7 +379,7 @@ Text:
         parsed = _extract_json_from_text(raw)
         # Merge pre-extracted deterministic heuristics into parsed JSON when
         # LLM leaves numeric fields empty or non-integer strings. This helps
-        # when the LLM returns human-friendly strings like '18 months'.
+        # when the LLM returns human-friendly strings like 'two weeks'.
         # For numeric fields, if heuristic and LLM disagree, prefer heuristic
         # because it is regex-grounded in the text and less prone to hallucination.
         if isinstance(parsed, dict):

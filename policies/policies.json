@@ -1,126 +1,105 @@
 {
-  "policy_set": "Egypt Private Sector Leave (Law 14 of 2025 — simplified ruleset)",
-  "source": "Condensed from public summaries of Egypt Labor Law 14/2025; internal automation only.",
-  "last_updated": "2026-05-13",
+  "policy_set": "Bibliotheca Alexandrina Book Circulation Policy",
+  "source": "Condensed from the BA Circulation Policy public page; internal automation only.",
+  "last_updated": "2026-05-18",
   "policies": [
     {
-      "id": "AL-01",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months < 6",
+      "id": "BR-01",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and user_type != 'researcher'",
       "action": "REJECT",
-      "message": "Annual leave is not granted before completing 6 months of service (first entitlement is up to 15 paid days after that milestone)."
+      "message": "Only researchers can benefit from the circulation service in the Main Reading Area."
     },
     {
-      "id": "AL-02",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months >= 6 and employment_duration_months < 12 and days_requested <= 15",
+      "id": "BR-02",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and has_membership_card == false",
+      "action": "REJECT",
+      "message": "Borrowing requires an individual membership card."
+    },
+    {
+      "id": "BR-03",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and current_books_borrowed >= 2",
+      "action": "REJECT",
+      "message": "You already have the maximum number of books allowed on loan. Return one before borrowing more."
+    },
+    {
+      "id": "BR-04",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and books_requested > 2",
+      "action": "REJECT",
+      "message": "Two books can be borrowed at a time. Requests for more than two books cannot be approved."
+    },
+    {
+      "id": "BR-05",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and days_requested > 14",
+      "action": "REJECT",
+      "message": "Books can be borrowed for up to two weeks (14 days). Requests exceeding this period are rejected."
+    },
+    {
+      "id": "BR-06",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and book_category != 'regular'",
+      "action": "REJECT",
+      "message": "This material type is not available for circulation."
+    },
+    {
+      "id": "BR-07",
+      "category": "Borrowing",
+      "condition": "request_type == 'borrow' and user_type == 'researcher' and has_membership_card == true and books_requested <= 2 and days_requested <= 14",
       "action": "APPROVE",
-      "message": "After 6 months but before one full year, up to 15 paid annual leave days may be granted under the simplified schedule."
+      "message": "Borrowing request meets all circulation criteria: researcher, valid membership, within book limit, within loan period, and regular circulating material."
     },
     {
-      "id": "AL-02B",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months >= 6 and employment_duration_months < 12 and days_requested > 15",
+      "id": "NC-01",
+      "category": "Non-circulating Material",
+      "condition": "request_type == 'borrow' and book_category in ['reference', 'periodical', 'audiovisual', 'illustrated', 'thesis', 'closed_stacks']",
       "action": "REJECT",
-      "message": "In the first year of service (from month 6 to before month 12), annual leave cannot exceed 15 paid days under this simplified rule."
+      "message": "This category is not available for borrowing: references, periodicals, audio-visual materials, predominantly illustrated monographs, theses, and closed stacks books must be used in-house."
     },
     {
-      "id": "AL-03",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months >= 12 and employment_duration_months < 120 and days_requested <= 21",
-      "action": "APPROVE",
-      "message": "After one full year of service and before 10 years, up to 21 paid annual leave days per year may be granted under the simplified schedule."
-    },
-    {
-      "id": "AL-03B",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months >= 12 and employment_duration_months < 120 and days_requested > 21",
-      "action": "REJECT",
-      "message": "Before completing 10 years of service, annual leave cannot exceed 21 paid days per year under this simplified rule."
-    },
-    {
-      "id": "AL-04",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months >= 120 and days_requested <= 30",
-      "action": "APPROVE",
-      "message": "After 10 years of service (or equivalent long tenure in this model), up to 30 paid annual leave days may be granted (aligned with the long-service tier in summaries of Law 14/2025)."
-    },
-    {
-      "id": "AL-04B",
-      "category": "Annual Leave",
-      "condition": "leave_type == 'annual' and employment_duration_months >= 120 and days_requested > 30",
-      "action": "REJECT",
-      "message": "Even after 10 years of service, this workflow caps a single annual leave request at 30 paid days (disability-related longer entitlements are not modeled here)."
-    },
-    {
-      "id": "SL-01",
-      "category": "Sick Leave",
-      "condition": "leave_type == 'sick'",
+      "id": "RN-01",
+      "category": "Renewal",
+      "condition": "request_type == 'renew'",
       "action": "ESCALATE",
-      "message": "Sick leave depends on a competent medical authority and pay bands over up to 12 months in a 3-year cycle; HR or medical review is required."
+      "message": "Renewals must be handled through the Circulation Desk, the Library website, or by calling +(203) 4839999 Ext: 1568."
     },
     {
-      "id": "ML-01",
-      "category": "Maternity Leave",
-      "condition": "leave_type == 'maternity' and days_requested <= 120",
-      "action": "APPROVE",
-      "message": "Maternity leave of up to 120 paid days is within the statutory entitlement described for Law 14/2025 in public summaries."
-    },
-    {
-      "id": "ML-02",
-      "category": "Maternity Leave",
-      "condition": "leave_type == 'maternity' and days_requested > 120",
-      "action": "REJECT",
-      "message": "A single maternity leave request cannot exceed 120 paid days under the summarized statutory cap."
-    },
-    {
-      "id": "HJ-01",
-      "category": "Hajj Leave",
-      "condition": "leave_type == 'hajj' and employment_duration_months < 60",
-      "action": "REJECT",
-      "message": "Hajj leave is granted only once after at least 5 years (60 months) of continuous service."
-    },
-    {
-      "id": "HJ-02",
-      "category": "Hajj Leave",
-      "condition": "leave_type == 'hajj' and employment_duration_months >= 60 and days_requested <= 30",
-      "action": "APPROVE",
-      "message": "After 5 years of service, Hajj leave of up to one month (30 days) may be granted under the summarized rules."
-    },
-    {
-      "id": "HJ-03",
-      "category": "Hajj Leave",
-      "condition": "leave_type == 'hajj' and employment_duration_months >= 60 and days_requested > 30",
-      "action": "REJECT",
-      "message": "Hajj leave cannot exceed one month (30 days) at a time in this simplified model."
-    },
-    {
-      "id": "SP-01",
-      "category": "Special / Short Personal Leave",
-      "condition": "leave_type == 'casual' and days_requested <= 3",
-      "action": "APPROVE",
-      "message": "Short personal or special-circumstance leave (mapped to casual in this schema) up to 3 days may be auto-approved when other rules do not block it."
-    },
-    {
-      "id": "SP-02",
-      "category": "Special / Short Personal Leave",
-      "condition": "leave_type == 'casual' and days_requested > 3",
-      "action": "REJECT",
-      "message": "More than 3 consecutive days for this informal short-leave category must go through HR under special-circumstances procedures."
-    },
-    {
-      "id": "CT-01",
-      "category": "Contact / Contagion Leave",
-      "condition": "leave_type == 'contact'",
+      "id": "RS-01",
+      "category": "Reservation",
+      "condition": "request_type == 'reserve'",
       "action": "ESCALATE",
-      "message": "Contact leave after exposure to contagious disease requires a medical decision and HR approval (up to 3 months may be possible under law summaries)."
+      "message": "Reservations for books currently borrowed by another member must be placed through the Circulation Desk. You will be notified when the book becomes available."
     },
     {
-      "id": "UL-01",
-      "category": "Unpaid Leave",
-      "condition": "leave_type == 'unpaid'",
+      "id": "RL-01",
+      "category": "Lost / Damaged Book",
+      "condition": "request_type == 'report_lost'",
       "action": "ESCALATE",
-      "message": "Unpaid leave requires explicit employer approval under Law 14/2025 summaries."
+      "message": "Lost book reports must be handled at the Circulation Desk. If confirmed missing after a month, the full value of the book plus administrative fees may apply."
+    },
+    {
+      "id": "RD-01",
+      "category": "Lost / Damaged Book",
+      "condition": "request_type == 'report_damaged'",
+      "action": "ESCALATE",
+      "message": "Damaged books must be reported immediately. Do not attempt to repair the damage. Qualified Library specialists will examine the book."
+    },
+    {
+      "id": "FN-01",
+      "category": "Fines and Suspension",
+      "condition": "has_fines == true",
+      "action": "REJECT",
+      "message": "Members must pay outstanding fines before borrowing other books."
+    },
+    {
+      "id": "OD-01",
+      "category": "Fines and Suspension",
+      "condition": "request_type == 'borrow' and days_requested > 0 and current_books_borrowed > 2",
+      "action": "REJECT",
+      "message": "Membership is suspended until the overdue book is delivered back and the fine is fully paid."
     }
   ]
 }

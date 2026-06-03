@@ -3,7 +3,7 @@ Baseline B — Single LLM call with structured JSON policies (conditions intact)
 No agent pipeline, no memory state, no validation node.
 
 The LLM must:
-1. Extract structured facts from the employee request text
+1. Extract structured facts from the member request text
 2. Evaluate each policy's machine-readable condition against those facts
 3. Apply precedence rules and return a decision
 
@@ -46,7 +46,7 @@ def _format_policies(policies_json: dict) -> str:
         "policy_set": policies_json.get("policy_set", ""),
         "note": (
             "Evaluate each policy's CONDITION against the facts you extract "
-            "from the employee request. The condition uses Python-like syntax. "
+            "from the member request. The condition uses Python-like syntax. "
             "If all variables in the condition are available and the expression "
             "evaluates to True, the policy matches."
         ),
@@ -75,17 +75,17 @@ def baseline_b_llm(input_text: str, policies_json: dict) -> str:
     No agent pipeline, no memory state, no validation node.
 
     The LLM must:
-    1. Extract structured facts from the employee request text
+    1. Extract structured facts from the member request text
     2. Evaluate each policy's machine-readable condition against those facts
     3. Apply precedence rules and return a decision
 
     Expected failure modes vs the pipeline:
     - Extraction errors: typos, abbreviations, or mixed-language input may cause
-      the LLM to misread days_requested or employment_duration_months
-    - Compound condition failures: multi-field conditions (tenure band AND day count)
+      the LLM to misread books_requested or days_requested
+    - Compound condition failures: multi-field conditions (membership AND book count)
       may be partially satisfied in the LLM's reasoning
     - Memory blindness: no cumulative state injected, so all memory-cap REJECT cases
-      are incorrectly evaluated as if the employee has zero prior usage
+      are incorrectly evaluated as if the member has zero prior usage
     - JSON reasoning degradation: structured JSON in a prompt is harder for the LLM
       to reason over holistically than dedicated code (cf. StructGPT findings)
     - Precedence inconsistency: the reject > escalate > approve rule is stated in
@@ -93,33 +93,34 @@ def baseline_b_llm(input_text: str, policies_json: dict) -> str:
 
     Returns exactly one of: APPROVE, REJECT, ESCALATE, NEED_MORE_INFO
     """
-    role = DOMAIN_PROMPTS.get("assistant_role", "HR assistant").strip()
-    subject = DOMAIN_PROMPTS.get("request_subject", "leave request").strip()
+    role = DOMAIN_PROMPTS.get("assistant_role", "circulation assistant").strip()
+    subject = DOMAIN_PROMPTS.get("request_subject", "circulation request").strip()
     subject_title = subject[0].upper() + subject[1:] if subject else "Request"
 
     policy_text = _format_policies(policies_json)
 
     prompt = f"""You are a {role}.
 
-You are given a set of company leave policies below. Each policy has an id,
+You are given a set of library circulation policies below. Each policy has an id,
 a category, a machine-readable CONDITION, an intended ACTION, and a human-readable
 MESSAGE describing when it applies.
 
 Your task:
-1. Read the employee request carefully.
-2. Extract structured facts: leave_type, days_requested, employment_duration_months,
+1. Read the member request carefully.
+2. Extract structured facts: request_type, user_type, books_requested, book_category,
+   has_membership_card, current_books_borrowed, days_requested, book_title, has_fines,
    and any other relevant fields mentioned.
-   - If numbers and a leave type are present in the text, extract them even if
-     phrasing is informal (e.g., "10 days off" → days_requested=10).
-   - For tenure, extract any mention of employment length; if absent, mark it null.
+   - If numbers and a request type are present in the text, extract them even if
+     phrasing is informal (e.g., "two books" → books_requested=2).
+   - For membership status, extract any mention of having a card or being a researcher.
 3. Evaluate each policy's CONDITION against the extracted facts.
-   The condition uses Python-like syntax (e.g., 'leave_type == "annual" and
-   employment_duration_months >= 6 and days_requested <= 15').
+   The condition uses Python-like syntax (e.g., 'request_type == "borrow" and
+   user_type == "researcher" and books_requested <= 2').
    A variable is only "missing" if it is REQUIRED by the condition AND cannot be
    inferred from the text at all. If a condition does NOT mention a variable,
    that variable's absence does NOT prevent evaluation.
-   - Example: for casual leave, the condition only checks leave_type and days_requested.
-     Do NOT skip casual policies just because tenure is not mentioned.
+   - Example: for renewal requests, the condition only checks request_type.
+     Do NOT skip renewal policies just because book count is not mentioned.
 4. If a condition evaluates to True, the policy matches.
 
 PRECEDENCE RULE (apply strictly):
@@ -127,8 +128,8 @@ PRECEDENCE RULE (apply strictly):
   Else if any says ESCALATE           → final decision is ESCALATE
   Else if any says APPROVE            → final decision is APPROVE
   If no policy clearly matches and critical information is missing → NEED_MORE_INFO
-  IMPORTANT: Only use NEED_MORE_INFO when the request truly lacks a leave type,
-  day count, or other field that ALL candidate policies require.
+  IMPORTANT: Only use NEED_MORE_INFO when the request truly lacks a request type,
+  book count, or other field that ALL candidate policies require.
 
 POLICIES (full structured JSON with conditions):
 {policy_text}

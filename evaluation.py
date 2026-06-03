@@ -10,8 +10,8 @@ Usage:
 Environment: OPENAI_API_KEY (see .env). Optional: POLICY_JSON_PATH.
 Optional: EVAL_CONSISTENCY_RUNS (default 10, minimum 10) — per-case stability: strict (all runs identical)
   and soft rate (fraction of runs matching the first run); both printed and exported.
-Optional: EVAL_BENCHMARK_PART — unset or \"all\" = full 125 cases; \"1\" / \"2\" / \"3\" = row slices 1–50, 51–100, 101–125 (quick run).
-Prints per-category agent accuracy (annual approve/reject, sick, maternity, hajj, casual, ambiguous/NMI; plus memory and contact/unpaid when present).
+Optional: EVAL_BENCHMARK_PART — unset or "all" = full 200 cases; "1" / "2" / "3" = row slices 1–50, 51–100, 101–125 (quick run).
+Prints per-category agent accuracy (borrow approve/reject, non-circulating, renewal, reservation, report, fines, ambiguous/NMI; plus memory when present).
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ import pandas as pd
 from baseline_a import baseline_a_llm
 from baseline_b import baseline_b_llm
 from engine.expected_labels import expected_decision_and_policies
-from evaluation_dataset import build_leave_evaluation_dataset
+from evaluation_dataset import build_book_evaluation_dataset
 from run_system import run_system
 from utils.config import POLICY_JSON_PATH
 
@@ -79,24 +79,24 @@ def _case_for_engine(agent_json: Dict[str, Any], patch: Optional[Dict[str, Any]]
 
 
 def print_per_category_agent_accuracy(df: pd.DataFrame) -> None:
-    """Break down agent decision accuracy by leave type (more informative than overall accuracy alone)."""
+    """Break down agent decision accuracy by circulation type (more informative than overall accuracy alone)."""
     if "agent_decision_correct" not in df.columns:
         return
     cat = df["category"].fillna("").astype(str)
     # Primary breakdown (requested labels)
     groups: List[tuple[str, pd.Series]] = [
-        ("Annual APPROVE:", cat == "annual_approve"),
-        ("Annual REJECT:", cat == "annual_reject"),
-        ("Sick ESCALATE:", cat == "sick_escalate"),
-        ("Maternity:", cat.str.startswith("maternity", na=False)),
-        ("Hajj:", cat.str.startswith("hajj", na=False)),
-        ("Casual:", cat.str.startswith("casual", na=False)),
+        ("Borrow APPROVE:", cat == "borrow_approve"),
+        ("Borrow REJECT:", cat == "borrow_reject"),
+        ("Non-circulating REJECT:", cat == "noncirculating_reject"),
+        ("Renewal ESCALATE:", cat == "renew_escalate"),
+        ("Reservation ESCALATE:", cat == "reserve_escalate"),
+        ("Report ESCALATE:", cat == "report_escalate"),
+        ("Fines REJECT:", cat == "fines_reject"),
         ("Ambiguous/NMI:", cat == "ambiguous"),
     ]
     # Supplemental rows when the benchmark includes these categories
     extra: List[tuple[str, pd.Series]] = [
         ("Memory (MEM-RECORD):", cat == "memory_reject"),
-        ("Contact / Unpaid:", cat.isin(["contact_escalate", "unpaid_escalate"])),
     ]
     print("\n=== Per-category accuracy (agent vs authored label) ===")
     for label, mask in groups + extra:
@@ -175,13 +175,13 @@ def main() -> None:
 
     load_project_env()
 
-    print("\n=== Employee Leave Evaluation ===")
+    print("\n=== Book Circulation Evaluation ===")
     print(f"OPENAI_API_KEY: {'SET' if os.getenv('OPENAI_API_KEY') else 'NOT SET'}")
 
     with open(POLICY_JSON_PATH, "r", encoding="utf-8") as f:
         policies_doc: Dict[str, Any] = json.load(f)
 
-    df = build_leave_evaluation_dataset()
+    df = build_book_evaluation_dataset()
     print(f"Loaded {len(df)} test cases (authored labels; no structured gold).")
 
     agent_results: List[Dict[str, Any]] = []

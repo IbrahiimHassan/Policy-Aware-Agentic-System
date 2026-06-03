@@ -219,7 +219,7 @@ def evaluate_string_condition(condition_str, data):
     """
     condition_str = condition_str.strip()
 
-    # Handle 'and' / 'or' first. Otherwise a prefix like "leave_type == 'annual'"
+    # Handle 'and' / 'or' first. Otherwise a prefix like "request_type == 'borrow'"
     # would match and return early, ignoring the rest of the condition.
     if " and " in condition_str:
         parts = condition_str.split(" and ")

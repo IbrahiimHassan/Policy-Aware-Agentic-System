@@ -1,73 +1,30 @@
-case_id,system,gold_label,predicted_label,scenario_type,leave_type,employment_duration_months,days_requested,matched_policy_ids,error_category,input
-TC_002,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Requesting 10 days off for annual vacation. My employment started 8 months ago.
-TC_003,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,I want to use my annual leave balance. I've worked here 11 months and need 15 days.
-TC_004,pipeline,APPROVE,NEED_MORE_INFO,clean,,13.0,14.0,,EXTRACTION_ERROR,"I need to take some time off — around 2 weeks. I have been here just over a year, 13 months to be exact."
-TC_004,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,"I need to take some time off — around 2 weeks. I have been here just over a year, 13 months to be exact."
-TC_004,baseline_b,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,"I need to take some time off — around 2 weeks. I have been here just over a year, 13 months to be exact."
-TC_005,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 21 days. I've completed 2 years of service.
-TC_012,pipeline,ESCALATE,REJECT,clean,sick,,14.0,"MEM-RECORD,SL-01",EXTRACTION_ERROR,Medical leave request — I had surgery last week and my doctor says I need 14 days to recover.
-TC_017,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,I would like to perform Hajj this year and request 20 days leave. I have 5 years of service.
-TC_017,baseline_b,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,I would like to perform Hajj this year and request 20 days leave. I have 5 years of service.
-TC_021,pipeline,APPROVE,NEED_MORE_INFO,clean,,,2.0,,EXTRACTION_ERROR,Can I take 2 days off for a family matter? It's urgent.
-TC_021,baseline_a,APPROVE,NEED_MORE_INFO,clean,,,,,EXTRACTION_ERROR,Can I take 2 days off for a family matter? It's urgent.
-TC_022,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,I need 4 days off for personal reasons. I've been here 6 months.
-TC_025,pipeline,NEED_MORE_INFO,ESCALATE,clean,sick,,,SL-01,MISSING_FIELD,I need leave soon but I don't know whether it should be sick leave or personal leave.
-TC_026,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 10 days. I've been with the company for 8 months.
-TC_027,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 11 days. I've been with the company for 9 months.
-TC_028,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 5 days. I've been with the company for 10 months.
-TC_034,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 11 days. I've been with the company for 16 months.
-TC_039,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 9 days. I've been with the company for 9 months.
-TC_040,baseline_a,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Annual leave request for 10 days. I've been with the company for 10 months.
-TC_061,pipeline,REJECT,APPROVE,clean,maternity,24.0,100.0,ML-01,POLICY_MISMATCH,Maternity leave request for 100 days. I have worked here 24 months.
-TC_061,baseline_a,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Maternity leave request for 100 days. I have worked here 24 months.
-TC_061,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Maternity leave request for 100 days. I have worked here 24 months.
-TC_063,pipeline,REJECT,APPROVE,clean,maternity,36.0,120.0,ML-01,POLICY_MISMATCH,Maternity leave request for 120 days. I have worked here 36 months.
-TC_063,baseline_a,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Maternity leave request for 120 days. I have worked here 36 months.
-TC_063,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Maternity leave request for 120 days. I have worked here 36 months.
-TC_064,baseline_b,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Hajj leave request for 25 days. I have been employed for 5 years.
-TC_065,pipeline,REJECT,APPROVE,clean,hajj,72.0,30.0,HJ-02,POLICY_MISMATCH,Hajj leave request for 30 days. I have been employed for 6 years.
-TC_065,baseline_a,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Hajj leave request for 30 days. I have been employed for 6 years.
-TC_065,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Hajj leave request for 30 days. I have been employed for 6 years.
-TC_066,baseline_b,APPROVE,REJECT,clean,,,,,EXTRACTION_ERROR,Hajj leave request for 20 days. I have been employed for 7 years.
-TC_067,pipeline,REJECT,APPROVE,clean,hajj,96.0,25.0,HJ-02,POLICY_MISMATCH,Hajj leave request for 25 days. I have been employed for 8 years.
-TC_067,baseline_a,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Hajj leave request for 25 days. I have been employed for 8 years.
-TC_067,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Hajj leave request for 25 days. I have been employed for 8 years.
-TC_069,pipeline,REJECT,APPROVE,clean,casual,9.0,1.0,SP-01,POLICY_MISMATCH,Casual leave request for 1 days. I've worked here 9 months.
-TC_069,baseline_a,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Casual leave request for 1 days. I've worked here 9 months.
-TC_069,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Casual leave request for 1 days. I've worked here 9 months.
-TC_071,pipeline,REJECT,APPROVE,clean,casual,11.0,3.0,SP-01,POLICY_MISMATCH,Casual leave request for 3 days. I've worked here 11 months.
-TC_071,baseline_a,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Casual leave request for 3 days. I've worked here 11 months.
-TC_071,baseline_b,REJECT,APPROVE,clean,,,,,EXTRACTION_ERROR,Casual leave request for 3 days. I've worked here 11 months.
-TC_101,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,2.0,,MEMORY_CAP_BOUNDARY,Requesting 2 days of annual leave. I have already taken 0 days this period.
-TC_101,baseline_a,REJECT,APPROVE,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 2 days of annual leave. I have already taken 0 days this period.
-TC_101,baseline_b,REJECT,APPROVE,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 2 days of annual leave. I have already taken 0 days this period.
-TC_102,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,3.0,,MEMORY_CAP_BOUNDARY,Requesting 3 days of annual leave. I have already taken 0 days this period.
-TC_102,baseline_a,REJECT,NEED_MORE_INFO,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 3 days of annual leave. I have already taken 0 days this period.
-TC_102,baseline_b,REJECT,APPROVE,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 3 days of annual leave. I have already taken 0 days this period.
-TC_103,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,4.0,,MEMORY_CAP_BOUNDARY,Requesting 4 days of annual leave. I have already taken 1 days this period.
-TC_103,baseline_a,REJECT,NEED_MORE_INFO,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 4 days of annual leave. I have already taken 1 days this period.
-TC_103,baseline_b,REJECT,APPROVE,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 4 days of annual leave. I have already taken 1 days this period.
-TC_104,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,5.0,,MEMORY_CAP_BOUNDARY,Requesting 5 days of annual leave. I have already taken 2 days this period.
-TC_104,baseline_a,REJECT,NEED_MORE_INFO,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 5 days of annual leave. I have already taken 2 days this period.
-TC_104,baseline_b,REJECT,APPROVE,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 5 days of annual leave. I have already taken 2 days this period.
-TC_105,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,6.0,,MEMORY_CAP_BOUNDARY,Requesting 6 days of annual leave. I have already taken 3 days this period.
-TC_106,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,7.0,,MEMORY_CAP_BOUNDARY,Requesting 7 days of annual leave. I have already taken 4 days this period.
-TC_106,baseline_b,REJECT,APPROVE,memory,,,,,MEMORY_CAP_BOUNDARY,Requesting 7 days of annual leave. I have already taken 4 days this period.
-TC_107,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,8.0,,MEMORY_CAP_BOUNDARY,Requesting 8 days of annual leave. I have already taken 5 days this period.
-TC_108,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,9.0,,MEMORY_CAP_BOUNDARY,Requesting 9 days of annual leave. I have already taken 6 days this period.
-TC_109,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,10.0,,MEMORY_CAP_BOUNDARY,Requesting 10 days of annual leave. I have already taken 7 days this period.
-TC_110,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,12.0,,MEMORY_CAP_BOUNDARY,Requesting 12 days of annual leave. I have already taken 9 days this period.
-TC_111,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,14.0,,MEMORY_CAP_BOUNDARY,Requesting 14 days of annual leave. I have already taken 11 days this period.
-TC_112,pipeline,REJECT,NEED_MORE_INFO,memory,annual,,15.0,,MEMORY_CAP_BOUNDARY,Requesting 15 days of annual leave. I have already taken 12 days this period.
-TC_127,baseline_a,APPROVE,REJECT,noisy,,,,,NOISE_INDUCED,عايز اخد إجازة سنوية 10 days I worked here for 8 months
-TC_130,baseline_a,APPROVE,REJECT,noisy,,,,,NOISE_INDUCED,i worked here ten years and two months and i want to take annual leave i need twenty five days off please
-TC_130,baseline_b,APPROVE,REJECT,noisy,,,,,NOISE_INDUCED,i worked here ten years and two months and i want to take annual leave i need twenty five days off please
-TC_138,pipeline,ESCALATE,REJECT,noisy,sick,24.0,10.0,"MEM-RECORD,SL-01",NOISE_INDUCED,I AM SICK AND NEED SICK LEAVE FOR TEN DAYS I HAVE BEEN HERE TWO YEARS
-TC_142,baseline_b,APPROVE,REJECT,noisy,,,,,NOISE_INDUCED,عايز إجازة حج 20 يوم عندي 6 سنين في الشركة
-TC_143,baseline_a,APPROVE,REJECT,noisy,,,,,NOISE_INDUCED,"haj leav pls
-- days: twenty five
-- service: seven years"
-TC_143,baseline_b,APPROVE,REJECT,noisy,,,,,NOISE_INDUCED,"haj leav pls
-- days: twenty five
-- service: seven years"
-TC_144,baseline_b,REJECT,APPROVE,noisy,,,,,NOISE_INDUCED,HAJJ LEAVE 20 DAYS I HAVE BEEN HERE 4 YEARS PLEASE APPROVE
+case_id,category,scenario,gold_label,pipeline_decision,error_category,input
+TC_007,borrow_approve,clean,APPROVE,REJECT,MISSING_FIELD,I am a researcher and need to borrow a book for my thesis. 7 days. I have my membership card.
+TC_013,borrow_approve,clean,APPROVE,NEED_MORE_INFO,MISSING_FIELD,I need one book for my research for 14 days. I have a valid membership card.
+TC_023,borrow_reject,clean,REJECT,NEED_MORE_INFO,MISSING_FIELD,"I am a student, not a researcher. Can I borrow a book for a week?"
+TC_024,borrow_reject,clean,REJECT,NEED_MORE_INFO,MISSING_FIELD,I work at a local company and want to borrow a book for my personal reading. 5 days.
+TC_027,borrow_reject,clean,REJECT,NEED_MORE_INFO,MISSING_FIELD,I am a researcher. I do not have my card with me today. Can I borrow one book?
+TC_126,borrow_approve,noisy,APPROVE,NEED_MORE_INFO,NOISE_INDUCED,i am a resercher wth card wnt 1 book 4 10 dys pls
+TC_127,borrow_approve,noisy,APPROVE,NEED_MORE_INFO,NOISE_INDUCED,أنا باحث وعندي كارنية عضوية عايز أستعير كتاب لمدة 7 أيام
+TC_128,borrow_approve,noisy,APPROVE,NEED_MORE_INFO,NOISE_INDUCED,i am reseacher i hav card i want to borrow two books for a week
+TC_130,borrow_reject,noisy,REJECT,NEED_MORE_INFO,NOISE_INDUCED,i am vizitor wnt borrow book 4 5 dys
+TC_131,borrow_reject,noisy,REJECT,NEED_MORE_INFO,NOISE_INDUCED,أنا طالب مش باحث عايز أستعير كتاب لمدة أسبوع
+TC_151,borrow_approve,clean,REJECT,APPROVE,MISSING_FIELD,I am a researcher with a card. I need negative one book for borrow. 5 days.
+TC_152,borrow_approve,clean,REJECT,APPROVE,MISSING_FIELD,I am a researcher with a card. I need minus two books for borrow. 10 days.
+TC_154,borrow_approve,clean,REJECT,APPROVE,MISSING_FIELD,I am a researcher with a card. I need minus one book for borrow. 14 days.
+TC_155,borrow_approve,clean,REJECT,APPROVE,MISSING_FIELD,I am a researcher with a card. I want to borrow negative two books for 5 days.
+TC_157,borrow_approve,clean,REJECT,APPROVE,MISSING_FIELD,I am a researcher with a card. Borrow minus one book for 7 days.
+TC_158,borrow_approve,clean,REJECT,APPROVE,MISSING_FIELD,I am a researcher with a card. I need negative two books for a week.
+TC_163,renew_escalate,clean,REJECT,ESCALATE,MISSING_FIELD,I need negative two weeks renewal for my book.
+TC_164,renew_escalate,clean,REJECT,ESCALATE,MISSING_FIELD,I want minus one week renewal.
+TC_165,reserve_escalate,clean,REJECT,ESCALATE,MISSING_FIELD,I want to reserve negative one book.
+TC_166,reserve_escalate,clean,REJECT,ESCALATE,MISSING_FIELD,I need minus one book reserved.
+TC_167,report_escalate,clean,REJECT,ESCALATE,MISSING_FIELD,I lost negative one book.
+TC_168,report_escalate,clean,REJECT,ESCALATE,MISSING_FIELD,I damaged minus one book.
+TC_197,ambiguous,clean,NEED_MORE_INFO,APPROVE,MISSING_FIELD,"- borrow
+- 1
+- 10 days
+- researcher
+- card"
+TC_198,ambiguous,clean,NEED_MORE_INFO,APPROVE,MISSING_FIELD,📚 borrow 🏛️ 1 🗓️ 10 days 👤 researcher 💳 card
+TC_199,ambiguous,clean,NEED_MORE_INFO,APPROVE,MISSING_FIELD,borrow borrow borrow one book book book ten days days days researcher researcher card card card

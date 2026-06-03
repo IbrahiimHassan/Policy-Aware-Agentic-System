@@ -112,7 +112,10 @@ def _evaluate_rule(
         fact = _get_at_path(store, path)
         if not isinstance(fact, list):
             return None
-        if value not in fact:
+        # Normalize: strip surrounding quotes, trim whitespace, lowercase
+        norm_value = str(value).strip().strip("\"'").strip().lower()
+        norm_fact = [str(item).strip().strip("\"'").strip().lower() for item in fact]
+        if norm_value not in norm_fact:
             return None
         return str(rule.get("message", "Our records show that item is not available right now."))
 
@@ -189,7 +192,7 @@ def collect_memory_remaining_hints(
         if stored + req > cap:
             continue
 
-        label = str(rule.get("kind_label", "casual")).strip() or "casual"
+        label = str(rule.get("kind_label", "item")).strip() or "item"
         after_this = max(0, cap - stored - req)
         key = f"{label}:{cap}:{stored}:{req}:{after_this}"
         if key in seen:
@@ -198,26 +201,21 @@ def collect_memory_remaining_hints(
 
         if after_this == 0:
             text = (
-                f"Memory note (informal planning count for this period): we keep a running total of "
-                f"up to {cap} {label} day(s) combined. Our records already showed {stored} taken before this request. "
-                f"This approval covers {req} day(s). Once that is included in the same total, you would have "
-                f"no {label} days left to schedule for any further leave in this period under that same informal total."
+                f"Memory note: we track up to {cap} {label}(s) at a time. Our records already showed {stored} "
+                f"before this request. This approval covers {req}. Once that is included, you would have "
+                f"no {label}(s) remaining for any further request under that same limit."
             )
         elif after_this == 1:
             text = (
-                f"Memory note (informal planning count for this period): we keep a running total of "
-                f"up to {cap} {label} day(s) combined. Our records showed {stored} taken before this request, "
-                f"and this approval adds {req}. After that total is updated, you would still have 1 {label} day "
-                f"available only for a separate future request — not as an extra day on top of the leave you "
-                f"were just granted."
+                f"Memory note: we track up to {cap} {label}(s) at a time. Our records showed {stored} before this request, "
+                f"and this approval adds {req}. After that total is updated, you would still have 1 {label} "
+                f"available only for a separate future request — not as an extra unit on top of this one."
             )
         else:
             text = (
-                f"Memory note (informal planning count for this period): we keep a running total of "
-                f"up to {cap} {label} day(s) combined. Our records showed {stored} taken before this request, "
+                f"Memory note: we track up to {cap} {label}(s) at a time. Our records showed {stored} before this request, "
                 f"and this approval adds {req}. After that total is updated, you would still have {after_this} "
-                f"{label} days available only for further separate requests this period — not stacked on top of "
-                f"the days in this approval."
+                f"{label}(s) available only for further separate requests — not stacked on top of this one."
             )
         hints.append(text)
 

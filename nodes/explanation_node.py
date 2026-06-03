@@ -68,6 +68,14 @@ Do not use bullet points or markdown.
         return {"explanation": with_memory(explanation)}
 
     if state.get("decision") == "NEED_MORE_INFO":
+        # Find policies that were skipped due to missing fields
+        skipped_policies = state.get("skipped_policies", [])
+        skipped_msgs = "\n".join(f"- {p.get('id')}: {p.get('message', '')}" for p in skipped_policies if p.get('message'))
+        if skipped_msgs:
+            policy_context = f"\nPolicies that could not be evaluated due to missing information:\n{skipped_msgs}\n"
+        else:
+            policy_context = ""
+
         prompt = f"""
 You are an assistant.
 
@@ -76,8 +84,8 @@ The user made this request:
 
 Their details:
 {json.dumps(case_data, indent=2)}
-
-We cannot decide yet because important information is missing (leave type, days, and/or tenure).
+{policy_context}
+We cannot decide yet because important information is missing.
 Write a brief, professional message (2-3 sentences) asking what is still needed.
 Do not use bullet points or markdown.
 """
@@ -152,8 +160,8 @@ The request {outcome_phrase} due to the following triggered policy reason(s):
 
 Write a clear, professional explanation (3-4 sentences) that:
 1. States the outcome directly
-2. If a role is provided, reference it; otherwise focus on the triggered policies and relevant details
-3. Mentions all triggered policy reasons in plain language
+2. Uses the policy message text VERBATIM or in very close paraphrase. Do NOT add framing like "According to our policy" or "The rules state that." Simply state the reason directly from the policy message above.
+3. Mentions ONLY the triggered policy reasons listed above. Do NOT add any reasoning, rules, or justifications that are NOT in the triggered policy reasons above. Do NOT inject facts about membership status, user role, or borrowing criteria unless they appear in the policy messages themselves.
 4. Provides a clear, professional explanation without excessive sympathy
 """
     response = llm.invoke(prompt)

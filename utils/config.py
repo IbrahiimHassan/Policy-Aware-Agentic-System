@@ -6,61 +6,103 @@ POLICY_JSON_PATH = os.environ.get("POLICY_JSON_PATH", "policies/policies.json")
 # Human-facing wording for prompts and baselines — update when switching business domain.
 # Schema field names live in SCHEMA below (domain-specific structured fields).
 DOMAIN_PROMPTS = {
-    "assistant_role": "Egypt private-sector leave decision assistant (Law 14 of 2025 summaries)",
-    "policies_intro": "You are given company leave policies (Egypt) and an employee leave request.",
+    "assistant_role": "Bibliotheca Alexandrina circulation desk assistant",
+    "policies_intro": "You are given the BA circulation policy and a library member request.",
     # Used as "Decide … for this {request_subject}." and section headers derived via .title() / upper()
-    "request_subject": "leave request",
+    "request_subject": "circulation request",
     # Fallback text when flattening policies JSON to prose (baseline B)
     "policy_category_fallback": "Policy",
-    "policy_rule_fallback": "Apply the company's stated rules for this policy category.",
+    "policy_rule_fallback": "Apply the Library's stated rules for this policy category.",
 }
 
 # Optional bullets appended to the LLM interpreter (after SCHEMA). Empty = SCHEMA only.
 INTERPRETER_EXTRACTION_HINTS = [
-    "- annual / annual leave / vacation → leave_type \"annual\"",
-    "- casual / personal day(s) / special short leave → leave_type \"casual\"",
-    "- sick / medical leave → leave_type \"sick\"",
-    "- maternity / parental (mother) → leave_type \"maternity\"",
-    "- Hajj / pilgrimage leave → leave_type \"hajj\"",
-    "- unpaid leave / leave without pay → leave_type \"unpaid\"",
-    "- contact with contagious disease / quarantine-style leave → leave_type \"contact\"",
-    "- months employed / tenure → employment_duration_months (integer)",
-    "- number of days requested → days_requested (integer)",
+    "- borrow / check out / take home → request_type 'borrow'",
+    "- renew / extend loan → request_type 'renew'",
+    "- reserve / hold / waiting list → request_type 'reserve'",
+    "- lost book / cannot find → request_type 'report_lost'",
+    "- damaged / torn / wet / broken → request_type 'report_damaged'",
+    "- researcher / faculty / scholar → user_type 'researcher'",
+    "- visitor / tourist / student / journalist → user_type 'non_researcher'",
+    "- membership card / library card → has_membership_card (boolean)",
+    "- number of books requested → books_requested (integer)",
+    "- loan period / for how many days → days_requested (integer)",
+    "- regular book / novel / monograph → book_category 'regular'",
+    "- encyclopedia / dictionary / atlas → book_category 'reference'",
+    "- newspaper / magazine / journal → book_category 'periodical'",
+    "- DVD / CD / audio / video → book_category 'audiovisual'",
+    "- illustrated / picture book → book_category 'illustrated'",
+    "- thesis / dissertation → book_category 'thesis'",
+    "- closed stacks / rare storage → book_category 'closed_stacks'",
+    "- book title / name of the book → book_title (string)",
+    "- outstanding fine / unpaid fee → has_fines (boolean, true if mentioned)",
 ]
 
 # Numeric thresholds aligned with policies/policies.json (for tests & docs).
 # Runtime policy evaluation uses policies.json only; these values mirror it.
 POLICY_LIMITS = {
-    "months_below_which_annual_rejected": 6,
-    "months_pro_rata_band_upper_exclusive": 12,
-    "months_long_tenure_minimum": 12,
-    "months_ten_year_tier": 120,
-    "annual_days_pro_rata_cap": 15,
-    "annual_days_after_one_year": 21,
-    "annual_days_above_which_rejected_when_long_tenure": 30,
-    "casual_max_approved_days": 3,
-    "casual_days_above_which_rejected": 4,
+    "max_books_per_borrow": 2,
+    "max_loan_days": 14,
+    "current_books_cap": 2,
 }
 
 SCHEMA = {
-    "leave_type": {
+    "request_type": {
         "type": "string",
         "default": "unknown",
-        "question": "What type of leave are you requesting?",
-        "examples": ["annual", "casual", "sick", "maternity", "hajj", "unpaid", "contact"],
-        "description": "The category of leave being requested."
+        "question": "What type of circulation request are you making?",
+        "examples": ["borrow", "renew", "reserve", "report_lost", "report_damaged"],
+        "description": "The type of circulation request."
     },
-    "employment_duration_months": {
+    "user_type": {
+        "type": "string",
+        "default": "unknown",
+        "question": "What is your user type?",
+        "examples": ["researcher", "non_researcher"],
+        "description": "Whether the user is a researcher or not."
+    },
+    "books_requested": {
         "type": "number",
         "default": 0,
-        "question": "How many months have you worked with your current employer?",
-        "description": "Duration of employment with the current employer in months."
+        "question": "How many books are you requesting?",
+        "description": "Number of books requested."
+    },
+    "book_category": {
+        "type": "string",
+        "default": "unknown",
+        "question": "What category is the material?",
+        "examples": ["regular", "reference", "periodical", "audiovisual", "illustrated", "thesis", "closed_stacks"],
+        "description": "The category of the requested material."
+    },
+    "has_membership_card": {
+        "type": "boolean",
+        "default": False,
+        "question": "Do you have an individual membership card?",
+        "description": "Whether the user has a valid individual membership card."
+    },
+    "current_books_borrowed": {
+        "type": "number",
+        "default": 0,
+        "question": "How many books do you currently have borrowed?",
+        "description": "Number of books currently on loan."
     },
     "days_requested": {
         "type": "number",
         "default": 0,
-        "question": "How many leave days are you requesting?",
-        "description": "Number of leave days requested."
+        "question": "For how many days do you want to borrow the material?",
+        "description": "Loan period requested in days."
+    },
+    "book_title": {
+        "type": "string",
+        "default": "",
+        "question": "What is the title of the book?",
+        "description": "Title of the requested book (for memory lookups)."
+    },
+    "has_fines": {
+        "type": "boolean",
+        "default": False,
+        "question": "Do you have any outstanding fines?",
+        "description": "Whether the user has unpaid fines."
     }
 }
 
@@ -74,70 +116,44 @@ MEMORY_AGENT = {
     "enabled": MEMORY_AGENT_ENABLED_DEFAULT,
     "policy_id": "MEM-RECORD",
     "category": "What we remember about this user",
-    # Facts only — e.g. "they already took N casual days this period" (no caps/entitlements here).
+    # Facts only — e.g. "which books are currently borrowed by others" (no caps/entitlements here).
     "store": {
-        "leave": {
+        "library": {
             # Global defaults (evaluation rows can override via gold `_memory_store_patch`).
-            "casual_days_already_taken_this_period": 0,
-            "sick_days_already_taken_this_period": 0,
-            "annual_days_already_taken_this_period": 0,
+            "books_borrowed_by_others": [],
+            "current_books_borrowed": 0,
         },
     },
     # Each rule: if it fires, a REJECT is appended after normal policy matching (policies still run first).
     "reject_rules": [
         {
-            "type": "sum_exceeds_cap",
-            "when": {"leave_type": "casual"},
-            "request_field": "days_requested",
-            "fact_path": ["leave", "casual_days_already_taken_this_period"],
-            "cap": 3,
-            "kind_label": "casual",
-            "message": (
-                "Our records show you already took {stored} short personal / casual day(s) this period. "
-                "You are asking for {requested} more now, which we cannot add under the informal cap at this time."
-            ),
+            "type": "case_member_of_fact_list",
+            "when": {"request_type": "borrow"},
+            "case_field": "book_title",
+            "fact_path": ["library", "books_borrowed_by_others"],
+            "message": "Our records show that this book is currently borrowed by another member and is not available for borrowing right now.",
         },
         {
             "type": "sum_exceeds_cap",
-            "when": {"leave_type": "sick"},
-            "request_field": "days_requested",
-            "fact_path": ["leave", "sick_days_already_taken_this_period"],
-            "cap": 7,
-            "kind_label": "sick",
+            "when": {"request_type": "borrow"},
+            "request_field": "books_requested",
+            "fact_path": ["library", "current_books_borrowed"],
+            "cap": 2,
+            "kind_label": "book",
             "message": (
-                "Our records show you already took {stored} sick day(s) in the period we track. "
-                "You are asking for {requested} more now, which we cannot add at this time."
+                "Our records show you already borrowed {stored} book(s). "
+                "You are asking for {requested} more now, which exceeds the total borrowing limit of {cap} books at a time."
             ),
         },
-        {
-            "type": "sum_exceeds_cap",
-            "when": {"leave_type": "annual"},
-            "request_field": "days_requested",
-            "fact_path": ["leave", "annual_days_already_taken_this_period"],
-            "cap": 30,
-            "kind_label": "annual",
-            "message": (
-                "Our records show you already took {stored} annual day(s) in the period we track. "
-                "You are asking for {requested} more now, which we cannot add at this time."
-            ),
-        },
-        # Example: block when a case field value appears in a remembered list (needs SCHEMA field).
-        # {
-        #     "type": "case_member_of_fact_list",
-        #     "when": {},
-        #     "case_field": "book_id",
-        #     "fact_path": ["library", "book_ids_not_available_now"],
-        #     "message": "Our records show that copy is not available to borrow right now.",
-        # },
     ],
     # Documentation-only — not read by engine.memory_agent. Use as `_memory_store_patch` shapes in tests.
     "illustrative_store_patches_for_docs": [
-        {"leave": {"casual_days_already_taken_this_period": 0}},  # same as default; no effect
-        {"leave": {"casual_days_already_taken_this_period": 1}},  # e.g. room under cap 3
-        {"leave": {"casual_days_already_taken_this_period": 2}},  # near cap 3
-        {"leave": {"sick_days_already_taken_this_period": 6}},  # illustrative sick tally
-        {"leave": {"annual_days_already_taken_this_period": 20}},  # room under cap 30
-        {"leave": {"casual_days_already_taken_this_period": 1, "sick_days_already_taken_this_period": 3}},
+        {"library": {"books_borrowed_by_others": []}},  # same as default; no effect
+        {"library": {"books_borrowed_by_others": ["The History of Alexandria"]}},  # one unavailable
+        {"library": {"books_borrowed_by_others": ["Book A", "Book B"]}},  # multiple unavailable
+        {"library": {"current_books_borrowed": 1}},  # room under cap 2
+        {"library": {"current_books_borrowed": 2}},  # at cap 2
+        {"library": {"current_books_borrowed": 1, "books_borrowed_by_others": ["Ancient Egypt"]}},
     ],
 }
 
@@ -147,81 +163,153 @@ DEFAULT_CASE = {key: meta["default"] for key, meta in SCHEMA.items()}
 
 # Optional alias mapping from extracted keys to schema keys.
 FIELD_MAPPING = {
-    "type_of_leave": "leave_type",
-    "leave_days": "days_requested",
-    "requested_days": "days_requested",
-    "employment_months": "employment_duration_months",
+    "type_of_request": "request_type",
+    "request": "request_type",
+    "number_of_books": "books_requested",
+    "book_count": "books_requested",
+    "category": "book_category",
+    "material_type": "book_category",
+    "membership_card": "has_membership_card",
+    "has_card": "has_membership_card",
+    "card": "has_membership_card",
+    "current_books": "current_books_borrowed",
+    "books_out": "current_books_borrowed",
+    "loan_days": "days_requested",
+    "borrowing_days": "days_requested",
+    "title": "book_title",
+    "book_name": "book_title",
+    "outstanding_fines": "has_fines",
+    "fines": "has_fines",
 }
 
 # Optional lightweight inference rules for obvious values in natural language.
 FIELD_INFERENCE = {
+    "request_type": {
+        "keywords": {
+            "borrow": "borrow",
+            "check out": "borrow",
+            "take home": "borrow",
+            "renew": "renew",
+            "extend": "renew",
+            "reserve": "reserve",
+            "hold": "reserve",
+            "waiting list": "reserve",
+            "lost": "report_lost",
+            "cannot find": "report_lost",
+            "missing": "report_lost",
+            "damaged": "report_damaged",
+            "torn": "report_damaged",
+            "wet": "report_damaged",
+            "broken": "report_damaged",
+        },
+        "phrase_values": [
+            {"pattern": r"\blost\s+book\b", "value": "report_lost"},
+            {"pattern": r"\bdamaged\s+book\b", "value": "report_damaged"},
+            {"pattern": r"\brenew\s+loan\b", "value": "renew"},
+            {"pattern": r"\brenew\s+book\b", "value": "renew"},
+            {"pattern": r"\breserve\s+book\b", "value": "reserve"},
+        ],
+    },
+    "user_type": {
+        "keywords": {
+            "researcher": "researcher",
+            "faculty": "researcher",
+            "scholar": "researcher",
+            "professor": "researcher",
+            "visitor": "non_researcher",
+            "tourist": "non_researcher",
+            "student": "non_researcher",
+            "journalist": "non_researcher",
+            "general public": "non_researcher",
+        },
+    },
+    "books_requested": {
+        "quantity_regex": [
+            r"(-?\d+)\s+books?",
+            r"borrow\s+(-?\d+)\s+books?",
+            r"request(?:ing)?\s+(-?\d+)\s+books?",
+            r"(?:need|want|take)\s+(-?\d+)\s+books?",
+        ],
+        "phrase_values": [
+            {"pattern": r"\bone\s+book\b", "value": 1},
+            {"pattern": r"\bone\s+more\s+book\b", "value": 1},
+            {"pattern": r"\ba\s+book\b", "value": 1},
+            {"pattern": r"\btwo\s+books\b", "value": 2},
+            {"pattern": r"\btwo\s+more\s+books\b", "value": 2},
+            {"pattern": r"\bthree\s+books\b", "value": 3},
+            {"pattern": r"\bfour\s+books\b", "value": 4},
+            {"pattern": r"\bfive\s+books\b", "value": 5},
+        ],
+    },
+    "book_category": {
+        "keywords": {
+            "regular": "regular",
+            "novel": "regular",
+            "monograph": "regular",
+            "encyclopedia": "reference",
+            "dictionary": "reference",
+            "atlas": "reference",
+            "reference": "reference",
+            "newspaper": "periodical",
+            "magazine": "periodical",
+            "journal": "periodical",
+            "periodical": "periodical",
+            "dvd": "audiovisual",
+            "cd": "audiovisual",
+            "audio": "audiovisual",
+            "video": "audiovisual",
+            "illustrated": "illustrated",
+            "picture": "illustrated",
+            "thesis": "thesis",
+            "dissertation": "thesis",
+            "closed stacks": "closed_stacks",
+            "rare": "closed_stacks",
+        },
+        "phrase_values": [
+            {"pattern": r"\bscientific\s+journal\b", "value": "periodical"},
+            {"pattern": r"\bphd\s+thesis\b", "value": "thesis"},
+            {"pattern": r"\bmaster'?s\s+thesis\b", "value": "thesis"},
+        ],
+    },
+    "has_membership_card": {
+        "true_phrases": ["have my card", "have a card", "have my membership card", "have a membership card", "valid card", "active card"],
+        "false_phrases": ["no card", "lost my card", "forgot my card", "do not have a card", "never got a card", "expired card", "without a card"],
+    },
+    "book_title": {
+        "regex": [
+            r"['\"]([^'\"]+)['\"]",
+        ],
+    },
+    "current_books_borrowed": {
+        "quantity_regex": [
+            r"already\s+(?:have|borrowed)\s+(\d+)\s+books?",
+            r"currently\s+(?:have|borrowed)\s+(\d+)\s+books?",
+            r"(\d+)\s+books?\s+(?:out|borrowed|checked\s+out)",
+            r"(\d+)\s+books?\s+on\s+loan",
+        ],
+        "phrase_values": [
+            {"pattern": r"\bno\s+books\s+out\b", "value": 0},
+            {"pattern": r"\bzero\s+books\b", "value": 0},
+            {"pattern": r"\bone\s+book\s+out\b", "value": 1},
+            {"pattern": r"\btwo\s+books\s+out\b", "value": 2},
+        ],
+    },
     "days_requested": {
         "quantity_regex": [
-            r"(\d+)\s+days?",
-            r"\b(\d+)\s+(?:[\w'-]+\s+){0,8}days?\b",
-            r"for\s+(\d+)\s+days?",
-            r"request(?:ing)?\s+(\d+)\s+days?",
-            r"(?:need|want|take)\s+(\d+)\s+(?:days?\b|day\b)",
+            r"(-?\d+)\s+days?",
+            r"for\s+(-?\d+)\s+days?",
+            r"(?:period|loan)\s+of\s+(-?\d+)\s+days?",
         ],
         "phrase_values": [
             {"pattern": r"\ba\s+week\b", "value": 7},
             {"pattern": r"\btwo\s+weeks\b", "value": 14},
             {"pattern": r"\bthree\s+weeks\b", "value": 21},
-            {"pattern": r"\bfour\s+weeks\b", "value": 28},
-            {"pattern": r"\ba\s+month\b", "value": 30},
-            {"pattern": r"\bfull\s+month\b", "value": 30},
-            {"pattern": r"\bone\s+month\b", "value": 30},
+            {"pattern": r"\bone\s+week\b", "value": 7},
+            {"pattern": r"\ba\s+ fortnight\b", "value": 14},
         ],
     },
-    "employment_duration_months": {
-        "regex": [
-            r"(?:employment|tenure)\s+(\d+)\s+months?",
-            r"(?:employment|tenure)\s*[:=]\s*(\d+)\s+months?",
-            r"(\d+)\s+months?\s*(?:,\s*)?(?:employment|tenure|service)",
-            r"(\d+)\s+months?\s+(?:of\s+)?(?:service|employment|work)",
-            r"(?:worked|working)\s+for\s+(\d+)\s+months?",
-            r"(?:been here|here for)\s+(\d+)\s+months?",
-            r"(?:for|only)\s+(\d+)\s+months?",
-        ],
-        "multiplier_regex": [
-            {"pattern": r"(?:been|worked|completed|here|joined)\s+(?:for\s+)?(\d+)\s*years?", "factor": 12},
-            {"pattern": r"(\d+)\s*years?\s*(?:with|in|at|of)?\s+(?:the\s+)?(?:company|firm|organization|service|employment|work|tenure|job)?", "factor": 12},
-            {"pattern": r"(\d+)\s*years?\s+(?:of\s+)?(?:service|employment|work|tenure)", "factor": 12},
-            {"pattern": r"(\d+)-year\s+(?:employee|tenure|service)", "factor": 12},
-        ],
-    },
-    "leave_type": {
-        "keywords": {
-            "annual": "annual",
-            "vacation": "annual",
-            "sick": "sick",
-            "casual": "casual",
-            "personal day": "casual",
-            "maternity": "maternity",
-            "hajj": "hajj",
-            "unpaid": "unpaid",
-            "contact": "contact",
-        },
-        "phrase_values": [
-            {"pattern": r"\bsick\s+leave\b", "value": "sick"},
-            {"pattern": r"\bmedical\s+leave\b", "value": "sick"},
-            {"pattern": r"\bmaternity\b", "value": "maternity"},
-            {"pattern": r"\bhajj\b", "value": "hajj"},
-            {"pattern": r"\bunpaid\s+leave\b", "value": "unpaid"},
-            {"pattern": r"\bleave\s+balance\b", "value": "annual"},
-            {"pattern": r"\balready\s+taken\b", "value": "annual"},
-            {"pattern": r"\bthis\s+year\b", "value": "annual"},
-            {"pattern": r"\bthis\s+period\b", "value": "annual"},
-            {"pattern": r"\btime\s+off\b", "value": "annual"},
-            {"pattern": r"\bdays\s+off\b", "value": "annual"},
-            {"pattern": r"\boff\s+work\b", "value": "annual"},
-            {"pattern": r"\bdays\s+requested\b", "value": "annual"},
-            {"pattern": r"\bdays\s+needed\b", "value": "annual"},
-            {"pattern": r"\bused\s+\d+", "value": "annual"},
-            {"pattern": r"\btaken\s+\d+", "value": "annual"},
-            {"pattern": r"\d+\s+days\s+used\b", "value": "annual"},
-            {"pattern": r"\d+\s+days\s+taken\b", "value": "annual"},
-            {"pattern": r"\balready\s+used\b", "value": "annual"},
-        ],
+    "has_fines": {
+        "true_phrases": ["have a fine", "have fines", "outstanding fine", "unpaid fine", "fine to pay", "overdue fee"],
+        "false_phrases": ["no fines", "no outstanding", "paid my fine", "no overdue"],
     },
 }

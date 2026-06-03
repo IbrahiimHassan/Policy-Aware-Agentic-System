@@ -48,6 +48,7 @@ def run_system(
 
     policy_result = policy_checker(case_data, POLICY_JSON_PATH)
     matching = policy_result.get("matching_policies", [])
+    skipped = policy_result.get("skipped_policies", [])
     matching, _, hints = apply_memory_to_matching_policies(
         case_data, matching, store_patch=memory_store_patch
     )
@@ -61,7 +62,20 @@ def run_system(
         )
     elif not matching and not can_make_decision(case_data, POLICY_JSON_PATH):
         decision = "NEED_MORE_INFO"
-        explanation = "More information is required to evaluate all relevant policies."
+        if skip_explanation:
+            explanation = ""
+        else:
+            explanation = explanation_node(
+                {
+                    "input": input_text,
+                    "case_data": case_data,
+                    "validation_errors": validation_errors,
+                    "matching_policies": matching,
+                    "skipped_policies": skipped,
+                    "memory_hints": hints,
+                    "decision": "NEED_MORE_INFO",
+                }
+            ).get("explanation", "")
     else:
         decision = decision_node(
             {"validation_errors": validation_errors, "matching_policies": matching}
@@ -75,6 +89,7 @@ def run_system(
                     "case_data": case_data,
                     "validation_errors": validation_errors,
                     "matching_policies": matching,
+                    "skipped_policies": skipped,
                     "memory_hints": hints,
                 }
             ).get("explanation", "")

@@ -1,8 +1,8 @@
 """
-125 benchmark rows from ``leave_benchmark_cases.CASES`` (or a slice via EVAL_BENCHMARK_PART).
+200 benchmark rows from ``book_benchmark_cases.CASES`` (or a slice via EVAL_BENCHMARK_PART).
 
-Set EVAL_BENCHMARK_PART: unset / ``all`` → 125 rows; ``1`` / ``2`` / ``3`` → first 50, next 50,
-last 25 (quick runs).
+Set EVAL_BENCHMARK_PART: unset / ``all`` → 200 rows; ``1`` / ``2`` / ``3`` → first 50, next 50,
+remaining 100 (quick runs).
 
 Optional per-case keys in each case dict:
   - ``is_noisy`` — noisy robustness slice
@@ -17,7 +17,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from leave_benchmark_cases import CASES as _ALL
+from book_benchmark_cases import CASES as _ALL
 
 
 def _all_cases() -> List[Dict[str, Any]]:
@@ -27,11 +27,11 @@ def _all_cases() -> List[Dict[str, Any]]:
     if part == "2":
         return list(_ALL[50:100])
     if part == "3":
-        return list(_ALL[100:125])
+        return list(_ALL[100:])
     return list(_ALL)
 
 
-def build_leave_evaluation_dataset() -> pd.DataFrame:
+def build_book_evaluation_dataset() -> pd.DataFrame:
     cases = _all_cases()
     rows: List[Dict[str, Any]] = []
     for tc in cases:

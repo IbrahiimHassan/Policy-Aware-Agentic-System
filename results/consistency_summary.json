@@ -1,16 +1,16 @@
 {
   "total_cases": 200,
-  "strict_consistency_percent": 92.0,
-  "mean_soft_consistency_rate": 97.5,
+  "strict_consistency_percent": 99.5,
+  "mean_soft_consistency_rate": 99.95,
   "strict_by_scenario": {
-    "clean": 89.33333333333333,
+    "clean": 99.33333333333333,
     "memory": 100.0,
     "noisy": 100.0
   },
   "strict_by_gold_label": {
-    "APPROVE": 97.82608695652173,
-    "ESCALATE": 97.22222222222221,
-    "NEED_MORE_INFO": 96.29629629629629,
-    "REJECT": 85.71428571428571
+    "APPROVE": 100.0,
+    "ESCALATE": 100.0,
+    "NEED_MORE_INFO": 100.0,
+    "REJECT": 99.0909090909091
   }
 }
